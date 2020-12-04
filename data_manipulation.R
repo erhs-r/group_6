@@ -18,10 +18,8 @@ larimer_income <- income %>%
 
 larimer_income$FIPS %in% larimer_tracts$GEOID # All 73 in tracts
 
-
-  
-
-
+larimer_info <- full_join(larimer_income, larimer_tracts, 
+                          by = list(x = "FIPS", y = "GEOID"))
 
 
 
