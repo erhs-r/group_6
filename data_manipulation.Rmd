@@ -1,0 +1,95 @@
+---
+title: "Data manipulation"
+author: "Breanna Wenck"
+date: "12/5/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+```
+
+```{r load_data}
+library(tidyverse)
+library(tigris)
+library(na.tools)
+library(lubridate)
+library(viridis)
+library(leaflet)
+
+state_policy <- read_csv("raw_data/state_policy_updates_20201122_0721.csv")
+LC_covid <- read_csv("raw_data/LC-COVID-casesdata.csv")
+covid_deaths <- read_csv("raw_data/covid_deaths.csv")
+income <- read_csv("raw_data/Income_Poverty__Census_Tracts_.csv")
+
+### Pull census data for Larimer county 
+
+larimer_tracts <- tracts(state = 08, county =069, 
+                        cb = TRUE, class = "sf")
+```
+
+```{r data_manipulation}
+### Filter the income data to just Larimer county
+
+larimer_income <- income %>%
+  filter(County == "LARIMER")
+### Join the data sets 
+
+larimer_info <- full_join(larimer_income, larimer_tracts, 
+                          by = list(x = "FIPS", y = "GEOID"))
+
+### Make all city names in title format to join data sets
+
+LC_covid <- LC_covid %>% 
+  mutate(City = str_to_title(City))
+
+### Create vectors of gps coordinates of cities from information collected from
+### the internet
+
+Lat <- c(40.559167, 40.404789, 40.284667, 40.377117, 40.336944,40.807820, 
+         40.529718, 40.702324, 40.477222, 40.633808, 40.625679, 40.431269,
+         40.453740, 40.794319, 40.487171, 38.894137)
+Lon <- c(-105.078056, -105.085868, -104.965504, -105.525514, -104.912222,
+         -105.578641, -104.981654, -105.005497, -104.911944, -105.148819,
+         -105.171089, -105.339661, -105.448837, -105.216579, -105.210056,
+         -107.925498)
+
+City <- c("Fort Collins", "Loveland", "Berthoud", "Estes Park", "Johnstown",
+            "Red Feather Lakes", "Timnath", "Wellington", "Windsor", "Laporte", 
+            "Bellvue", "Drake", "Glen Haven", "Livermore", "Masonville", 
+            "Cedaredge")
+
+### Combine the vectors into a data frame and then join the data sets so cities
+### have coordinates associated with them for mapping and remove NA values
+
+larimer_gps <- data.frame(City, Lat, Lon)
+
+LC_covid_gps <- full_join(larimer_gps, LC_covid, by = "City") %>% 
+  na.rm()
+
+LC_covid_gps <- LC_covid_gps %>% 
+  mutate(ReportedDate = mdy(ReportedDate)) 
+
+LC_covid_gps <- LC_covid_gps %>% 
+  mutate(month = month(ReportedDate, label = TRUE,
+                     abbr = FALSE),
+       weekday = wday(ReportedDate, label = TRUE,
+                      abbr = FALSE)) %>% 
+  mutate(popup_info = paste("<b>Location:</b>", City, "<br/>",
+                            "<b>Month:</b>", month, "<br/>",
+                            "<b>Date:</b>", ReportedDate, "<br/>",
+                            "<b>Total # of cases:</b>", CaseCount))
+leaflet() %>% 
+  addTiles() %>% 
+  addPolygons(data = larimer_tracts, color = "#000000", 
+              fillColor = "969696", weight = 2, 
+              group = "tracts") %>% 
+  addMarkers(data = LC_covid_gps, 
+             lat = ~Lat, 
+             lng = ~Lon,
+             clusterOptions = markerClusterOptions(),
+             popup = ~popup_info)
+
+
+```
+
