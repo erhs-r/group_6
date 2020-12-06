@@ -28,11 +28,22 @@ larimer_ses <- ses %>%
   select(Tract_FIPS:Poverty_Per_Capita_Income) %>%
   filter(County == "LARIMER") 
 
-#NOT SURE How to do this?
-#trying to create geometry for our data by combining larimer data from 
-#tigris census by fips to get lat lon
-larimer_pov <- larimer_ses %>%
-  mutate(fips= Tract_FIPS)
+#example from Bree
+larimer_tracts <- tracts(state = 08, county =069, 
+                         cb = TRUE, class = "sf")
+
+larimer_income <- ses %>%
+  filter(County == "LARIMER")
+
+larimer_income$FIPS %in% larimer_tracts$GEOID # All 73 in tracts
+
+larimer_info <- full_join(larimer_income, larimer_tracts, 
+                          by = list(x = "FIPS", y = "GEOID"))
+
+
+
+
+
 
 
 # example using tigris census to create maps with fips codes----
