@@ -33,6 +33,7 @@ larimer_tracts <- tracts(state = 08, county =069,
 
 larimer_income <- income %>%
   filter(County == "LARIMER")
+
 ### Join the data sets 
 
 larimer_info <- full_join(larimer_income, larimer_tracts, 
@@ -76,20 +77,49 @@ LC_covid_gps <- LC_covid_gps %>%
        weekday = wday(ReportedDate, label = TRUE,
                       abbr = FALSE)) %>% 
   mutate(popup_info = paste("<b>Location:</b>", City, "<br/>",
-                            "<b>Month:</b>", month, "<br/>",
+                            "<b>Age:</b>", Age, "<br/>",
                             "<b>Date:</b>", ReportedDate, "<br/>",
                             "<b>Total # of cases:</b>", CaseCount))
-leaflet() %>% 
-  addTiles() %>% 
+
+### Provide covid deaths with coordinates
+
+covid_deaths <- full_join(larimer_gps, covid_deaths, 
+                          by = list(x = "City", y = "city")) %>% 
+  na.rm()
+
+mean_age_deaths <- covid_deaths %>% 
+  group_by(City) %>% 
+  summarize(mean_age = mean(age), .groups = "drop")
+
+mean_age_deaths <- full_join(larimer_gps, mean_age_deaths, by = "City") %>% 
+  na.rm() %>% 
+  mutate(popup_info = paste("<b>Location:</b>", City, "<br/>",
+                            "<b>Mean age of death:</b>", mean_age))
+
+### Add icon to differentiate between cases and deaths
+
+greenLeafIcon <- makeIcon(
+  iconUrl = "http://leafletjs.com/examples/custom-icons/leaf-green.png",
+  iconWidth = 38, iconHeight = 95,
+  iconAnchorX = 22, iconAnchorY = 94,
+  shadowUrl = "http://leafletjs.com/examples/custom-icons/leaf-shadow.png",
+  shadowWidth = 50, shadowHeight = 64,
+  shadowAnchorX = 4, shadowAnchorY = 62)
+
+leaflet() %>%
+  addTiles() %>%
   addPolygons(data = larimer_tracts, color = "#000000", 
               fillColor = "969696", weight = 2, 
               group = "tracts") %>% 
   addMarkers(data = LC_covid_gps, 
              lat = ~Lat, 
              lng = ~Lon,
-             clusterOptions = markerClusterOptions(),
-             popup = ~popup_info)
-
-
+             popup = ~popup_info,
+             clusterOptions = markerClusterOptions()) %>% 
+  addMarkers(data = mean_age_deaths, 
+             lng = ~ Lon, 
+             lat = ~ Lat,
+             popup = ~ popup_info,
+             icon = greenLeafIcon)
 ```
 
