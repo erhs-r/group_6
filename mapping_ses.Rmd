@@ -18,6 +18,7 @@ library(lubridate)
 library(leaflet)
 library(ggrepel)
 
+#state_policy <- read_csv("raw_data/state_policy_updates_20201122_0721.csv")
 LC_covid <- read_csv("raw_data/LC-COVID-casesdata.csv")
 covid_deaths <- read_csv("raw_data/covid_deaths.csv")
 income <- read_csv("raw_data/Income_Poverty__Census_Tracts_.csv")
@@ -102,20 +103,35 @@ mean_age_deaths <- full_join(larimer_gps, mean_age_deaths, by = "City") %>%
 larimer_short <- larimer_info %>%
   select(Population_Total:Poverty_Per_Capita_Income, TRACTCE)
 
+
 larimer_tracts %>% left_join(.,larimer_short, by = "TRACTCE") %>%
   ggplot() +
   geom_sf(aes(fill = Population_Total)) +
   geom_point(data = larimer_gps %>%
                filter(City!="Cedaredge"), aes(x=Lon, y=Lat)) +
-               geom_text(data = larimer_gps %>%
+               geom_text_repel(data = larimer_gps %>%
                         filter(City!="Cedaredge"), 
                         aes(x=Lon, y=Lat, 
                         label = City), color = "white",
                         show.legend=NA, 
                         nudge_x = .1, nudge_y = .1,
                         angle = 25) +
-  geom_label_repel(aes)
   ggtitle("Population Totals for Larimer County")
+
+#Figure for income
+larimer_tracts %>% left_join(.,larimer_short, by = "TRACTCE") %>%
+  ggplot() +
+  geom_sf(aes(fill = Poverty_Per_Capita_Income)) +
+  geom_point(data = larimer_gps %>%
+               filter(City!="Cedaredge"), aes(x=Lon, y=Lat)) +
+               geom_text_repel(data = larimer_gps %>%
+                        filter(City!="Cedaredge"), 
+                        aes(x=Lon, y=Lat, 
+                        label = City), color = "white",
+                        show.legend=NA, 
+                        nudge_x = .1, nudge_y = .1,
+                        angle = 25) +
+  ggtitle("Income Totals for Larimer County")
 
 ```
 
