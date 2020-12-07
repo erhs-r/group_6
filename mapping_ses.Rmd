@@ -1,0 +1,140 @@
+---
+title: "Income and poverty mapping"
+author: "Rebecca Witinok-Huber"
+date: "12/7/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+```
+
+```{r load_data}
+library(tidyverse)
+library(ggplot2)
+library(tigris)
+library(na.tools)
+library(lubridate)
+library(leaflet)
+library(ggrepel)
+
+LC_covid <- read_csv("raw_data/LC-COVID-casesdata.csv")
+covid_deaths <- read_csv("raw_data/covid_deaths.csv")
+income <- read_csv("raw_data/Income_Poverty__Census_Tracts_.csv")
+
+### Pull census data for Larimer county 
+
+larimer_tracts <- tracts(state = 08, county =069, 
+                        cb = TRUE, class = "sf")
+```
+
+```{r data_manipulation}
+### Filter the income data to just Larimer county
+
+larimer_income <- income %>%
+  filter(County == "LARIMER")
+
+### Join the data sets 
+
+larimer_info <- full_join(larimer_income, larimer_tracts, 
+                          by = list(x = "FIPS", y = "GEOID"))
+
+### Make all city names in title format to join data sets
+
+LC_covid <- LC_covid %>% 
+  mutate(City = str_to_title(City))
+
+### Create vectors of gps coordinates of cities from information collected from
+### the internet
+
+Lat <- c(40.559167, 40.404789, 40.284667, 40.377117, 40.336944,40.807820, 
+         40.529718, 40.702324, 40.477222, 40.633808, 40.625679, 40.431269,
+         40.453740, 40.794319, 40.487171, 38.894137)
+Lon <- c(-105.078056, -105.085868, -104.965504, -105.525514, -104.912222,
+         -105.578641, -104.981654, -105.005497, -104.911944, -105.148819,
+         -105.171089, -105.339661, -105.448837, -105.216579, -105.210056,
+         -107.925498)
+
+City <- c("Fort Collins", "Loveland", "Berthoud", "Estes Park", "Johnstown",
+            "Red Feather Lakes", "Timnath", "Wellington", "Windsor", "Laporte", 
+            "Bellvue", "Drake", "Glen Haven", "Livermore", "Masonville", 
+            "Cedaredge")
+
+### Combine the vectors into a data frame and then join the data sets so cities
+### have coordinates associated with them for mapping and remove NA values
+
+larimer_gps <- data.frame(City, Lat, Lon)
+
+LC_covid_gps <- full_join(larimer_gps, LC_covid, by = "City") %>% 
+  na.rm()
+
+LC_covid_gps <- LC_covid_gps %>% 
+  mutate(ReportedDate = mdy(ReportedDate)) 
+
+LC_covid_gps <- LC_covid_gps %>% 
+  mutate(month = month(ReportedDate, label = TRUE,
+                     abbr = FALSE),
+       weekday = wday(ReportedDate, label = TRUE,
+                      abbr = FALSE)) %>% 
+  mutate(popup_info = paste("<b>Location:</b>", City, "<br/>",
+                            "<b>Age:</b>", Age, "<br/>",
+                            "<b>Date:</b>", ReportedDate, "<br/>",
+                            "<b>Total # of cases:</b>", CaseCount))
+
+### Provide covid deaths with coordinates
+
+covid_deaths <- full_join(larimer_gps, covid_deaths, 
+                          by = list(x = "City", y = "city")) %>% 
+  na.rm()
+
+mean_age_deaths <- covid_deaths %>% 
+  group_by(City) %>% 
+  summarize(mean_age = mean(age), .groups = "drop")
+
+mean_age_deaths <- full_join(larimer_gps, mean_age_deaths, by = "City") %>% 
+  na.rm() %>% 
+  mutate(popup_info = paste("<b>Location:</b>", City, "<br/>",
+                            "<b>Mean age of death:</b>", mean_age))
+```
+
+```{r mapping_ses}
+
+larimer_short <- larimer_info %>%
+  select(Population_Total:Poverty_Per_Capita_Income, TRACTCE)
+
+larimer_tracts %>% left_join(.,larimer_short, by = "TRACTCE") %>%
+  ggplot() +
+  geom_sf(aes(fill = Population_Total)) +
+  geom_point(data = larimer_gps %>%
+               filter(City!="Cedaredge"), aes(x=Lon, y=Lat)) +
+               geom_text(data = larimer_gps %>%
+                        filter(City!="Cedaredge"), 
+                        aes(x=Lon, y=Lat, 
+                        label = City), color = "white",
+                        show.legend=NA, 
+                        nudge_x = .1, nudge_y = .1,
+                        angle = 25) +
+  geom_label_repel(aes)
+  ggtitle("Population Totals for Larimer County")
+
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
