@@ -100,14 +100,13 @@ mean_age_deaths <- full_join(larimer_gps, mean_age_deaths, by = "City") %>%
 ```
 
 ```{r mapping_ses}
-
 #Creating a new dataset with fewer variables
 larimer_short <- larimer_info %>%
   select(Population_Total:Poverty_Per_Capita_Income, TRACTCE) 
 
 #How to join LC_covid_gps with to larimer_tracts with no common col?
-larimer_tracts <- LC_covid_gps %>%
-  select(City:weekday, )
+# larimer_tracts <- LC_covid_gps %>%
+#   select(City:weekday, )
 
 
 
@@ -150,7 +149,6 @@ larimer_tracts %>% left_join(.,larimer_short, by = "TRACTCE") %>%
   ggtitle("Mean Income for Larimer County") +
   scale_fill_viridis(name = "Income (USD)", direction = -1, option = "cividis")
 
-<<<<<<< HEAD
 #Figure for pov per capita income
 larimer_tracts %>% left_join(.,larimer_short, by = "TRACTCE") %>%
   ggplot() +
