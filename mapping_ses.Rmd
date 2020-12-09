@@ -150,6 +150,7 @@ larimer_tracts %>% left_join(.,larimer_short, by = "TRACTCE") %>%
   ggtitle("Mean Income for Larimer County") +
   scale_fill_viridis(name = "Income (USD)", direction = -1, option = "cividis")
 
+<<<<<<< HEAD
 #Figure for pov per capita income
 larimer_tracts %>% left_join(.,larimer_short, by = "TRACTCE") %>%
   ggplot() +
@@ -183,3 +184,5 @@ larimer_tracts %>% left_join(.,larimer_short, by = "TRACTCE") %>%
 ```
 
 
+=======
+>>>>>>> b85741ab6c0324d43e5cd17903b1d3627efa5906
