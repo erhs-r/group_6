@@ -17,6 +17,7 @@ library(na.tools)
 library(lubridate)
 library(leaflet)
 library(ggrepel)
+library(viridis)
 
 #state_policy <- read_csv("raw_data/state_policy_updates_20201122_0721.csv")
 LC_covid <- read_csv("raw_data/LC-COVID-casesdata.csv")
@@ -100,10 +101,26 @@ mean_age_deaths <- full_join(larimer_gps, mean_age_deaths, by = "City") %>%
 
 ```{r mapping_ses}
 
+#Creating a new dataset with fewer variables
 larimer_short <- larimer_info %>%
-  select(Population_Total:Poverty_Per_Capita_Income, TRACTCE)
+  select(Population_Total:Poverty_Per_Capita_Income, TRACTCE) 
+
+#How to join LC_covid_gps with to larimer_tracts with no common col?
+larimer_tracts <- LC_covid_gps %>%
+  select(City:weekday, )
 
 
+
+#create figures in a single image with facet wrap
+# larimer_tracts %>% left_join(.,larimer_short, by = "TRACTCE") %>%
+# ggplot(aes(Population_Total, Poverty_Mean_Household_Income, Poverty_Per_Capita_Income, Percent_Poverty_AllPeople_Income_Below_Pov_Level)) +
+#   geom_point() +
+#   facet_wrap(vars(Population_Total, Poverty_Mean_Household_Income, Poverty_Per_Capita_Income, Percent_Poverty_AllPeople_Income_Below_Pov_Level))
+
+#side by side plots
+#par(mfrow=c(2,2))
+
+#figure for larimer county population totals
 larimer_tracts %>% left_join(.,larimer_short, by = "TRACTCE") %>%
   ggplot() +
   geom_sf(aes(fill = Population_Total)) +
@@ -112,13 +129,28 @@ larimer_tracts %>% left_join(.,larimer_short, by = "TRACTCE") %>%
                geom_text_repel(data = larimer_gps %>%
                         filter(City!="Cedaredge"), 
                         aes(x=Lon, y=Lat, 
-                        label = City), color = "white",
+                        label = City), color = "black",
                         show.legend=NA, 
-                        nudge_x = .1, nudge_y = .1,
-                        angle = 25) +
-  ggtitle("Population Totals for Larimer County")
+                        nudge_x = .1, nudge_y = .1) +
+  scale_fill_viridis(name = "City Population", direction = -1, option = "cividis") +
+  ggtitle("Population Totals for Cities in Larimer County") 
 
 #Figure for income
+larimer_tracts %>% left_join(.,larimer_short, by = "TRACTCE") %>%
+  ggplot() +
+  geom_sf(aes(fill = Poverty_Mean_Household_Income)) +
+  geom_point(data = larimer_gps %>%
+               filter(City!="Cedaredge"), aes(x=Lon, y=Lat)) +
+               geom_text_repel(data = larimer_gps %>%
+                        filter(City!="Cedaredge"), 
+                        aes(x=Lon, y=Lat, 
+                        label = City), color = "black",
+                        show.legend=NA, 
+                        nudge_x = .1, nudge_y = .1) +
+  ggtitle("Mean Income for Larimer County") +
+  scale_fill_viridis(name = "Income (USD)", direction = -1, option = "cividis")
+
+#Figure for pov per capita income
 larimer_tracts %>% left_join(.,larimer_short, by = "TRACTCE") %>%
   ggplot() +
   geom_sf(aes(fill = Poverty_Per_Capita_Income)) +
@@ -127,30 +159,27 @@ larimer_tracts %>% left_join(.,larimer_short, by = "TRACTCE") %>%
                geom_text_repel(data = larimer_gps %>%
                         filter(City!="Cedaredge"), 
                         aes(x=Lon, y=Lat, 
-                        label = City), color = "white",
+                        label = City), color = "black",
                         show.legend=NA, 
-                        nudge_x = .1, nudge_y = .1,
-                        angle = 25) +
-  ggtitle("Income Totals for Larimer County")
+                        nudge_x = .1, nudge_y = .1) +
+  ggtitle("Poverty Per Capita Income for Larimer County") +
+  scale_fill_viridis(name = "Number of People", direction = -1, option = "cividis")
+
+#Percent of population below poverty levels
+larimer_tracts %>% left_join(.,larimer_short, by = "TRACTCE") %>%
+  ggplot() +
+  geom_sf(aes(fill = Percent_Poverty_AllPeople_Income_Below_Pov_Level)) +
+  geom_point(data = larimer_gps %>%
+               filter(City!="Cedaredge"), aes(x=Lon, y=Lat)) +
+               geom_text_repel(data = larimer_gps %>%
+                        filter(City!="Cedaredge"), 
+                        aes(x=Lon, y=Lat, 
+                        label = City), color = "black",
+                        show.legend=NA, 
+                        nudge_x = .1, nudge_y = .1) +
+  ggtitle("Percent of Larimer County Below the Poverty Level") +
+  scale_fill_viridis(name = "Percent", direction = -1, option = "cividis")
 
 ```
 
-## R Markdown
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
-```
-
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
