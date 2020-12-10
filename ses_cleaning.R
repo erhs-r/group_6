@@ -47,7 +47,7 @@ larimer_tracts %>% left_join(.,larimer_short, by = "TRACTCE") %>%
   geom_sf(aes(fill = Population_Total)) +
   geom_point(data = larimer_gps %>%
                filter(City!="Cedaredge"), aes(x=Lon, y=Lat)) +
-  geom_text(data = larimer_gps %>%
+  geom_text_repel(data = larimer_gps %>%
               filter(City!="Cedaredge"), 
             aes(x=Lon, y=Lat, 
                 label = City), color = "white",
@@ -56,7 +56,14 @@ larimer_tracts %>% left_join(.,larimer_short, by = "TRACTCE") %>%
             angle = 25) +
   ggtitle("Population Totals for Larimer County")
 
-
   
 ggplot() +
   geom_sf(data = larimer_tracts) 
+
+install.packages("OpenStreetMaps")
+library(OpenStreetMap)
+
+head(larimer)
+
+
+
