@@ -4,8 +4,6 @@ library(na.tools)
 library(lubridate)
 library(viridis)
 library(leaflet)
-library(plotly)
-library(imager)
 
 state_policy <- read_csv("raw_data/state_policy_updates_20201122_0721.csv")
 LC_covid <- read_csv("raw_data/LC-COVID-casesdata.csv")
@@ -49,16 +47,16 @@ total_covid_per_city <- LC_covid %>%
 ### Create vectors of gps coordinates of cities from information collected from
 ### the internet
 
-Lat <- c(40.625679, 40.284667, 38.894137, 40.431269, 40.377117, 40.559167, 
+Lat <- c(40.625679, 40.284667, 40.431269, 40.377117, 40.559167, 
          40.453740, 40.336944, 40.633808, 40.794319, 40.404789, 40.487171,
          40.807820, 40.529718, 40.702324, 40.477222)
 
-Lon <- c( -105.171089, -104.965504, -107.925498, -105.339661, -105.525514,
+Lon <- c( -105.171089, -104.965504, -105.339661, -105.525514,
           -105.078056, -105.448837, -104.912222, -105.148819, -105.216579,
           -105.085868, -105.210056,-105.578641, -104.981654, 
           -105.005497, -104.911944)
 
-City <- c("Bellvue", "Berthoud", "Cedaredge", "Drake", "Estes Park",
+City <- c("Bellvue", "Berthoud", "Drake", "Estes Park",
           "Fort Collins", "Glen Haven", "Johnstown", "Laporte", "Livermore",
           "Loveland", "Masonville", "Red Feather Lakes", "Timnath", 
           "Wellington", "Windsor")
@@ -101,39 +99,27 @@ LC_covid_gps <- LC_covid_gps %>%
 covid_deaths <- full_join(larimer_gps, covid_deaths, 
                           by = list(x = "City", y = "city")) %>% na.rm()
 
+covid_deaths_total <- covid_deaths %>% 
+  group_by(City) %>% 
+  count()
+
 mean_age_deaths <- covid_deaths %>% 
   group_by(City) %>% 
   summarize(mean_age = mean(age), .groups = "drop")
 
+mean_age_deaths <- full_join(mean_age_deaths, covid_deaths_total, by = "City")
+
 mean_age_deaths <- full_join(larimer_gps, mean_age_deaths, by = "City") %>% 
   na.rm() %>% 
   mutate(popup_info = paste("<b>Location:</b>", City, "<br/>",
+                            "<b>Number of deaths:</b>", n, "<br/>",
                             "<b>Mean age of death:</b>", mean_age))
 City <- c("Bellvue", "Berthoud", "Cedaredge", "Drake", "Estes Park", 
           "Fort Collins", "Glen Haven", "Johnstown", "Laporte", "Livermore",
           "Loveland", "Masonville", "Red Feather Lakes", "Timnath", 
           "Wellington", "Windsor")
 
-popup_info <- c("<img src = images/Bellvue_plot.svg>", 
-           "<img src = images/Berthoud_plot.svg>",
-           "<img src = images/Cedaredge_plot.svg>",
-           "<img src = images/Drake_plot.svg>",
-           "<img src = images/EP_plot.svg>",
-           "<img src = images/FC_plot.svg>",
-           "<img src = images/GH_plot.svg>",
-           "<img src = images/Johnstown_plot.svg>",
-           "<img src = images/Laporte_plot.svg>",
-           "<img src = images/Livermore_plot.svg>",
-           "<img src = images/Loveland_plot.svg>",
-           "<img src = images/Masonville_plot.svg>",
-           "<img src = images/RFL_plot.svg>",
-           "<img src = images/Timnath_plot.svg>",
-           "<img src = images/Wellington_plot.svg>",
-           "<img src = images/Windsor_plot.svg>")
 
-plots <- data.frame(City, popup_info)
-
-total_covid <- full_join(total_covid, plots, by = "City")
          
     
 ### Prepare palette info for legend add-on
@@ -160,7 +146,12 @@ leaflet() %>%
              lat = ~ Lat,
              popup = ~ popup_info, 
              icon = ~obit_icon)
+
 ### put individual popup data per city in popup column
+city_count <- LC_covid_gps %>% 
+  group_by(City, ReportedDate) %>% 
+  count()
+
 FC <- LC_covid_gps %>% 
   mutate(FC = City == "Fort Collins") %>% 
   filter(FC) %>% 
@@ -174,10 +165,12 @@ FC %>%
   ggtitle("Positive Fort Collins COVID-19 cases") +
   scale_color_gradientn(colors = rainbow(5),
                         name = "Total infected") +
-  theme(element_text(size = 100)) +
-  theme_bw()
-
-FC_graph <- load.image("images/FC_plot.png")
+  theme_bw() +
+  ggsave("FC.svg",
+         device = "svg",
+         width = 6, 
+         height = 6,
+         limitsize = FALSE)
 
 Loveland <- LC_covid_gps %>% 
   mutate(Loveland = City == "Loveland") %>% 
@@ -192,8 +185,12 @@ Loveland %>%
   ggtitle("Positive Loveland COVID-19 cases") +
   scale_color_gradientn(colors = rainbow(5),
                         name = "Total infected") +
-  theme(element_text(size = 100)) +
-  theme_bw()
+  theme_bw() +
+  ggsave("Loveland.svg", 
+         device = "svg", 
+         width = 6, 
+         height = 6,
+         limitsize = FALSE)
 
 Berthoud <- LC_covid_gps %>% 
   mutate(Berthoud = City == "Berthoud") %>% 
@@ -208,12 +205,16 @@ Berthoud %>%
   ggtitle("Positive Berthoud COVID-19 cases") +
   scale_color_gradientn(colors = rainbow(5),
                         name = "Total infected") +
-  theme(element_text(size = 100)) +
-  theme_bw()
+  theme_bw() +
+  ggsave("Berthoud.svg", 
+         device = "svg", 
+         width = 6, 
+         height = 6,
+         limitsize = FALSE)
 
 EP <- LC_covid_gps %>% 
-  mutate(EP = City == "Estes Park") %>% 
-  filter(EP) %>% 
+  mutate(FC = City == "Estes Park") %>% 
+  filter(FC) %>% 
   group_by(ReportedDate) %>% 
   count()
 
@@ -224,8 +225,12 @@ EP %>%
   ggtitle("Positive Estes Park COVID-19 cases") +
   scale_color_gradientn(colors = rainbow(5),
                         name = "Total infected") +
-  theme(element_text(size = 100)) +
-  theme_bw()
+  theme_bw() +
+  ggsave("EP.svg", 
+         device = "svg", 
+         width = 6, 
+         height = 6,
+         limitsize = FALSE)
 
 Johnstown <- LC_covid_gps %>% 
   mutate(Johnstown = City == "Johnstown") %>% 
@@ -240,8 +245,12 @@ Johnstown %>%
   ggtitle("Positive Johnstown COVID-19 cases") +
   scale_color_gradientn(colors = rainbow(5),
                         name = "Total infected") +
-  theme(element_text(size = 100)) +
-  theme_bw()
+  theme_bw() +
+  ggsave("Johnstown.svg", 
+         device = "svg", 
+         width = 6, 
+         height = 6,
+         limitsize = FALSE)
 
 RFL <- LC_covid_gps %>% 
   mutate(RFL = City == "Red Feather Lakes") %>% 
@@ -256,8 +265,12 @@ RFL %>%
   ggtitle("Positive Red Feather COVID-19 cases") +
   scale_color_gradientn(colors = rainbow(5),
                         name = "Total infected") +
-  theme(element_text(size = 100)) +
-  theme_bw()
+  theme_bw() +
+  ggsave("RFL.svg", 
+         device = "svg", 
+         width = 6, 
+         height = 6,
+         limitsize = FALSE)
 
 Timnath <- LC_covid_gps %>% 
   mutate(Timnath = City == "Timnath") %>% 
@@ -272,8 +285,12 @@ Timnath %>%
   ggtitle("Positive Timnath COVID-19 cases") +
   scale_color_gradientn(colors = rainbow(5),
                         name = "Total infected") +
-  theme(element_text(size = 100)) +
-  theme_bw()
+  theme_bw() +
+  ggsave("Timnath.svg", 
+         device = "svg", 
+         width = 6, 
+         height = 6,
+         limitsize = FALSE)
 
 Wellington <- LC_covid_gps %>% 
   mutate(Wellington = City == "Wellington") %>% 
@@ -288,8 +305,12 @@ Wellington %>%
   ggtitle("Positive Wellington COVID-19 cases") +
   scale_color_gradientn(colors = rainbow(5),
                         name = "Total infected") +
-  theme(element_text(size = 100)) +
-  theme_bw()
+  theme_bw() +
+  ggsave("Wellington.svg", 
+         device = "svg", 
+         width = 6, 
+         height = 6,
+         limitsize = FALSE)
 
 Windsor <- LC_covid_gps %>% 
   mutate(Windsor = City == "Windsor") %>% 
@@ -304,8 +325,12 @@ Windsor %>%
   ggtitle("Positive Windsor COVID-19 cases") +
   scale_color_gradientn(colors = rainbow(5),
                         name = "Total infected") +
-  theme(element_text(size = 100)) +
-  theme_bw()
+  theme_bw() +
+  ggsave("Windsor.svg", 
+         device = "svg", 
+         width = 6, 
+         height = 6,
+         limitsize = FALSE)
 
 Laporte <- LC_covid_gps %>% 
   mutate(Laporte = City == "Laporte") %>% 
@@ -320,8 +345,12 @@ Laporte %>%
   ggtitle("Positive Laporte COVID-19 cases") +
   scale_color_gradientn(colors = rainbow(5),
                         name = "Total infected") +
-  theme(element_text(size = 100)) +
-  theme_bw()
+  theme_bw() +
+  ggsave("Laporte.svg", 
+         device = "svg", 
+         width = 6, 
+         height = 6,
+         limitsize = FALSE)
   
 Bellvue <- LC_covid_gps %>% 
   mutate(Bellvue = City == "Bellvue") %>% 
@@ -336,8 +365,12 @@ Bellvue %>%
   ggtitle("Positive Bellvue COVID-19 cases") +
   scale_color_gradientn(colors = rainbow(5),
                         name = "Total infected") +
-  theme(element_text(size = 100)) +
-  theme_bw()
+  theme_bw() +
+  ggsave("Bellvue.svg", 
+         device = "svg", 
+         width = 6, 
+         height = 6,
+         limitsize = FALSE)
 
 Drake <- LC_covid_gps %>% 
   mutate(Drake = City == "Drake") %>% 
@@ -352,8 +385,12 @@ Drake %>%
   ggtitle("Positive Drake COVID-19 cases") +
   scale_color_gradientn(colors = rainbow(5),
                         name = "Total infected") +
-  theme(element_text(size = 100)) +
-  theme_bw()
+  theme_bw() +
+  ggsave("Drake.svg", 
+         device = "svg", 
+         width = 6, 
+         height = 6,
+         limitsize = FALSE)
 
 GH <- LC_covid_gps %>% 
   mutate(GH = City == "Glen Haven") %>% 
@@ -368,8 +405,12 @@ GH %>%
   ggtitle("Positive Glen Haven COVID-19 cases") +
   scale_color_gradientn(colors = rainbow(5),
                         name = "Total infected") +
-  theme(element_text(size = 100)) +
-  theme_bw()
+  theme_bw() +
+  ggsave("GH.svg", 
+         device = "svg", 
+         width = 6, 
+         height = 6,
+         limitsize = FALSE)
 
 Livermore <- LC_covid_gps %>% 
   mutate(Livermore = City == "Livermore") %>% 
@@ -384,8 +425,12 @@ Livermore %>%
   ggtitle("Positive Livermore COVID-19 cases") +
   scale_color_gradientn(colors = rainbow(5),
                         name = "Total infected") +
-  theme(element_text(size = 100)) +
-  theme_bw()
+  theme_bw() +
+  ggsave("Livermore.svg", 
+         device = "svg", 
+         width = 6, 
+         height = 6,
+         limitsize = FALSE)
 
 Masonville <- LC_covid_gps %>% 
   mutate(Masonville = City == "Masonville") %>% 
@@ -400,8 +445,32 @@ Masonville %>%
   ggtitle("Positive Masonville COVID-19 cases") +
   scale_color_gradientn(colors = rainbow(5),
                         name = "Total infected") +
-  theme(element_text(size = 100)) +
-  theme_bw()
+  theme_bw() +
+  ggsave("Masonville.svg", 
+         device = "svg", 
+         width = 6, 
+         height = 6,
+         limitsize = FALSE)
+
+popup_info <- c("<img src = images/Bellvue.svg>", 
+                "<img src = images/Berthoud.svg>",
+                "<img src = images/Drake.svg>",
+                "<img src = images/EP.svg>",
+                "<img src = images/FC.svg>",
+                "<img src = images/GH.svg>",
+                "<img src = images/Johnstown.svg>",
+                "<img src = images/Laporte.svg>",
+                "<img src = images/Livermore.svg>",
+                "<img src = images/Loveland.svg>",
+                "<img src = images/Masonville.svg>",
+                "<img src = images/RFL.svg>",
+                "<img src = images/Timnath.svg>",
+                "<img src = images/Wellington.svg>",
+                "<img src = images/Windsor.svg>")
+
+plots <- data.frame(City, popup_info)
+
+total_covid <- full_join(total_covid, plots, by = "City")
 
 Cedaredge <- LC_covid_gps %>% 
   mutate(Cedaredge = City == "Cedaredge") %>% 
@@ -417,11 +486,12 @@ Cedaredge %>%
   scale_color_gradientn(colors = rainbow(5),
                         name = "Total infected") +
   theme(element_text(size = 100)) +
-  theme_bw()
-
-popup_info <- LC_covid_gps %>% 
-  group_by(City) %>% 
-  plot_ly(x = ~ReportedDate)
+  theme_bw() +
+  ggsave("Cedaredge.svg", 
+         device = "svg", 
+         width = 10, 
+         height = 10,
+         limitsize = FALSE)
 
 
 leaflet() %>%
