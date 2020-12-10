@@ -5,6 +5,8 @@ library(lubridate)
 library(viridis)
 library(leaflet)
 
+# Making a change so I can push to github
+
 state_policy <- read_csv("raw_data/state_policy_updates_20201122_0721.csv")
 LC_covid <- read_csv("raw_data/LC-COVID-casesdata.csv")
 covid_deaths <- read_csv("raw_data/covid_deaths.csv")
