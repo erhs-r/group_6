@@ -6,8 +6,9 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, CB = FALSE)
 ```
+
 
 ```{r load_data}
 library(tidyverse)
@@ -18,6 +19,7 @@ library(lubridate)
 library(leaflet)
 library(ggrepel)
 library(viridis)
+library(plotly)
 
 #state_policy <- read_csv("raw_data/state_policy_updates_20201122_0721.csv")
 LC_covid <- read_csv("raw_data/LC-COVID-casesdata.csv")
@@ -29,6 +31,7 @@ income <- read_csv("raw_data/Income_Poverty__Census_Tracts_.csv")
 larimer_tracts <- tracts(state = 08, county =069, 
                         cb = TRUE, class = "sf")
 ```
+
 
 ```{r data_manipulation}
 ### Filter the income data to just Larimer county
@@ -49,18 +52,19 @@ LC_covid <- LC_covid %>%
 ### Create vectors of gps coordinates of cities from information collected from
 ### the internet
 
-Lat <- c(40.559167, 40.404789, 40.284667, 40.377117, 40.336944,40.807820, 
-         40.529718, 40.702324, 40.477222, 40.633808, 40.625679, 40.431269,
-         40.453740, 40.794319, 40.487171, 38.894137)
-Lon <- c(-105.078056, -105.085868, -104.965504, -105.525514, -104.912222,
-         -105.578641, -104.981654, -105.005497, -104.911944, -105.148819,
-         -105.171089, -105.339661, -105.448837, -105.216579, -105.210056,
-         -107.925498)
+Lat <- c(40.625679, 40.284667, 38.894137, 40.431269, 40.377117, 40.559167, 
+         40.453740, 40.336944, 40.633808, 40.794319, 40.404789, 40.487171,
+         40.807820, 40.529718, 40.702324, 40.477222)
 
-City <- c("Fort Collins", "Loveland", "Berthoud", "Estes Park", "Johnstown",
-            "Red Feather Lakes", "Timnath", "Wellington", "Windsor", "Laporte", 
-            "Bellvue", "Drake", "Glen Haven", "Livermore", "Masonville", 
-            "Cedaredge")
+Lon <- c( -105.171089, -104.965504, -107.925498, -105.339661, -105.525514,
+          -105.078056, -105.448837, -104.912222, -105.148819, -105.216579,
+          -105.085868, -105.210056,-105.578641, -104.981654, 
+          -105.005497, -104.911944)
+
+City <- c("Bellvue", "Berthoud", "Cedaredge", "Drake", "Estes Park",
+          "Fort Collins", "Glen Haven", "Johnstown", "Laporte", "Livermore",
+          "Loveland", "Masonville", "Red Feather Lakes", "Timnath", 
+          "Wellington", "Windsor")
 
 ### Combine the vectors into a data frame and then join the data sets so cities
 ### have coordinates associated with them for mapping and remove NA values
@@ -83,6 +87,16 @@ LC_covid_gps <- LC_covid_gps %>%
                             "<b>Date:</b>", ReportedDate, "<br/>",
                             "<b>Total # of cases:</b>", CaseCount))
 
+total_covid_per_city <- LC_covid %>% 
+  group_by(City) %>% 
+  count()
+
+total_covid <- full_join(total_covid_per_city, larimer_gps, by = "City") %>% 
+  na.rm()
+```
+
+
+```{r covid_coords}
 ### Provide covid deaths with coordinates
 
 covid_deaths <- full_join(larimer_gps, covid_deaths, 
@@ -99,23 +113,63 @@ mean_age_deaths <- full_join(larimer_gps, mean_age_deaths, by = "City") %>%
                             "<b>Mean age of death:</b>", mean_age))
 ```
 
-```{r mapping_ses}
+
+```{r keyvars_income}
+
 #Creating a new dataset with fewer variables
 larimer_short <- larimer_info %>%
-  select(Population_Total:Poverty_Per_Capita_Income, TRACTCE) 
+  select(Population_Total:Poverty_Per_Capita_Income, TRACTCE)
 
+#Join income vars with larimer_tracts by "TRACTCE", now income vars have coords
+tracts_income <- larimer_tracts %>% left_join(.,larimer_short, by = "TRACTCE") 
+```
+
+
+* This is where I'll need to do something to combine lat/lon in covid with 
+  geometry in tracts
+  
+```{r newdf-covid}
 #How to join LC_covid_gps with to larimer_tracts with no common col?
 # larimer_tracts <- LC_covid_gps %>%
 #   select(City:weekday, )
+```
 
 
+## Income-Poverty Maps
 
-#create figures in a single image with facet wrap
-# larimer_tracts %>% left_join(.,larimer_short, by = "TRACTCE") %>%
-# ggplot(aes(Population_Total, Poverty_Mean_Household_Income, Poverty_Per_Capita_Income, Percent_Poverty_AllPeople_Income_Below_Pov_Level)) +
-#   geom_point() +
-#   facet_wrap(vars(Population_Total, Poverty_Mean_Household_Income, Poverty_Per_Capita_Income, Percent_Poverty_AllPeople_Income_Below_Pov_Level))
+ *trying to create income maps side-by-side using pivot_longer and facet_wrap*
+ 
+```{r pivotlong}
 
+#Pivot df with geodata and income vars longer, names=income vars and thier values
+income_long <- pivot_longer(tracts_income,
+    cols = Population_Total:Poverty_Per_Capita_Income)
+head(income_long)
+
+tracts_income_long <- income_long %>%
+  select(geometry:value)
+
+# #create side-by-side maps of income data by community in larimer county
+#  plot <- income_long %>%
+#    ggplot() +
+#    geom_sf(aes(fill = value)) +
+#    geom_point(data = larimer_gps %>%
+#                filter(City!="Cedaredge"), aes(x=Lon, y=Lat)) +
+#                geom_text_repel(data = larimer_gps %>%
+#                         filter(City!="Cedaredge"), 
+#                         aes(x=Lon, y=Lat, 
+#                         label = City), color = "black",
+#                         show.legend=NA, 
+#                         nudge_x = .1, nudge_y = .1) +
+#    facet_wrap( ~name) + theme_void()
+# 
+#  ggplotly(plot)
+```
+
+
+* maps created 1-by-1
+
+```{r maps}
 #side by side plots
 #par(mfrow=c(2,2))
 
@@ -180,7 +234,3 @@ larimer_tracts %>% left_join(.,larimer_short, by = "TRACTCE") %>%
   scale_fill_viridis(name = "Percent", direction = -1, option = "cividis")
 
 ```
-
-
-=======
->>>>>>> b85741ab6c0324d43e5cd17903b1d3627efa5906
