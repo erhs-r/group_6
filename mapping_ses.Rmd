@@ -149,21 +149,23 @@ head(income_long)
 tracts_income_long <- income_long %>%
   select(geometry:value)
 
-# #create side-by-side maps of income data by community in larimer county
-#  plot <- income_long %>%
-#    ggplot() +
-#    geom_sf(aes(fill = value)) +
-#    geom_point(data = larimer_gps %>%
-#                filter(City!="Cedaredge"), aes(x=Lon, y=Lat)) +
-#                geom_text_repel(data = larimer_gps %>%
-#                         filter(City!="Cedaredge"), 
-#                         aes(x=Lon, y=Lat, 
-#                         label = City), color = "black",
-#                         show.legend=NA, 
-#                         nudge_x = .1, nudge_y = .1) +
-#    facet_wrap( ~name) + theme_void()
-# 
-#  ggplotly(plot)
+#create side-by-side maps of income data by community in larimer county
+ # plot <- income_long %>%
+ #   ggplot() +
+ #   geom_sf(aes(fill = value)) +
+ #   geom_point(data = larimer_gps %>%
+ #               filter(City!="Cedaredge"), aes(x=Lon, y=Lat)) +
+ #               geom_text_repel(data = larimer_gps %>%
+ #                        filter(City!="Cedaredge"),
+ #                        aes(x=Lon, y=Lat,
+ #                        label = City), color = "black",
+ #                        show.legend=NA,
+ #                        nudge_x = .1, nudge_y = .1) +
+ #      scale_fill_viridis(name = "City Population", direction = -1, 
+ #      option = "cividis") +
+ #   facet_wrap( ~name) + theme_void()
+
+# ggplotly(plot)
 ```
 
 
