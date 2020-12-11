@@ -104,6 +104,10 @@ covid_deaths_total <- covid_deaths %>%
   group_by(City) %>% 
   count()
 
+city_count <- full_join(city_count, LC_covid_gps, 
+                              by = (list(x = c("City", "ReportedDate"),
+                                         y = c("City", "ReportedDate"))))
+
 mean_age_deaths <- covid_deaths %>% 
   group_by(City) %>% 
   summarize(mean_age = mean(age), .groups = "drop")
@@ -115,15 +119,8 @@ mean_age_deaths <- full_join(larimer_gps, mean_age_deaths, by = "City") %>%
   mutate(popup_info = paste("<b>Location:</b>", City, "<br/>",
                             "<b>Number of deaths:</b>", n, "<br/>",
                             "<b>Mean age of death:</b>", mean_age))
-City <- c("Bellvue", "Berthoud", "Cedaredge", "Drake", "Estes Park", 
-          "Fort Collins", "Glen Haven", "Johnstown", "Laporte", "Livermore",
-          "Loveland", "Masonville", "Red Feather Lakes", "Timnath", 
-          "Wellington", "Windsor")
-
-
-         
     
-### Prepare palette info for legend add-on
+### Make icons and leaflet map
 
 obit_icon <- makeIcon("images/icons8-obituary-30.png", 
                       iconWidth = 15, iconHeight = 15)
@@ -150,8 +147,8 @@ leaflet() %>%
 
 ### put individual popup data per city in popup column
 city_count <- LC_covid_gps %>% 
-  group_by(City, ReportedDate) %>% 
-  count()
+  select(City:Age) %>% 
+  mutate(group_by(City, ReportedDate)) %>% count()
 
 FC <- LC_covid_gps %>% 
   mutate(FC = City == "Fort Collins") %>% 
