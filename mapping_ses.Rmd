@@ -20,6 +20,7 @@ library(leaflet)
 library(ggrepel)
 library(viridis)
 library(plotly)
+library("ggpubr")
 
 #state_policy <- read_csv("raw_data/state_policy_updates_20201122_0721.csv")
 LC_covid <- read_csv("raw_data/LC-COVID-casesdata.csv")
@@ -138,73 +139,87 @@ tracts_income <- larimer_tracts %>% left_join(.,larimer_short, by = "TRACTCE")
 ## Income-Poverty Maps
 
 * maps created 1-by-1 ----
+```{r avg-covid-bycity}
 
-```{r maps}
-#side by side plots
-par(mfrow=c(2,2))
+#total covid cases by city in larimer county
+LC_covid %>%
+  group_by(City) %>%
+  count()
 
-#figure for larimer county population totals
-#larimer_tracts %>% left_join(.,larimer_short, by = "TRACTCE") #use tracts_income
-  
-  
-  tracts_income %>%
+#total covid deaths by city in larimer county
+covid_deaths %>%
+  group_by(City) %>%
+  count()
+```
+
+```{r create maps}
+
+#create base figure with city names as points
+poly <- pop <-  tracts_income %>%
+  ggplot() +
+  geom_sf() +
+  geom_point(data = LC_covid_gps %>%
+               filter(City!="Cedaredge"), aes(x=Lon, y=Lat)) +
+               geom_text_repel(data = larimer_gps %>%
+                        filter(City!="Cedaredge"), 
+                        aes(x=Lon, y=Lat, 
+                        label = City), color = "black",
+                        show.legend=NA, 
+                        nudge_x = .1, nudge_y = .1) +
+    ggtitle("Larimer County City Boundaries") + theme_bw()
+poly
+
+#population map
+pop <-  tracts_income %>%
   ggplot() +
   geom_sf(aes(fill = Population_Total)) +
-  geom_point(data = larimer_gps %>%
+   geom_point(data = mean_age_deaths %>%
                filter(City!="Cedaredge"), aes(x=Lon, y=Lat)) +
                geom_text_repel(data = larimer_gps %>%
                         filter(City!="Cedaredge"), 
                         aes(x=Lon, y=Lat, 
                         label = City), color = "black",
                         show.legend=NA, 
-                        nudge_x = .1, nudge_y = .1) +
-  scale_fill_viridis(name = "City Population", direction = -1, option = "cividis") +
+                        nudge_x = .1, nudge_y = .1) 
+  scale_fill_viridis(name = "Population", direction = -1, option = "cividis") +
   ggtitle("Population Totals for Cities in Larimer County") 
+pop
 
-#Figure for income
-tracts_income %>%
+#Population density
+pop_den <-  tracts_income %>%
+  ggplot() +
+  geom_sf(aes(fill = Population_Density_PerLandSquareMile)) +
+  scale_fill_viridis(name = "Number of People Per Square Mile", direction = -1, option = "cividis") +
+  ggtitle("Population Density") 
+pop_den
+
+#income map
+inc <- tracts_income %>%
   ggplot() +
   geom_sf(aes(fill = Poverty_Mean_Household_Income)) +
-  geom_point(data = larimer_gps %>%
-               filter(City!="Cedaredge"), aes(x=Lon, y=Lat)) +
-               geom_text_repel(data = larimer_gps %>%
-                        filter(City!="Cedaredge"), 
-                        aes(x=Lon, y=Lat, 
-                        label = City), color = "black",
-                        show.legend=NA, 
-                        nudge_x = .1, nudge_y = .1) +
   ggtitle("Mean Income for Larimer County") +
-  scale_fill_viridis(name = "Income (USD)", direction = -1, option = "cividis")
+  scale_fill_viridis(name = "USD", direction = -1, option = "cividis")
+inc
 
-#Figure for pov per capita income
-tracts_income %>%
-  ggplot() +
-  geom_sf(aes(fill = Poverty_Per_Capita_Income)) +
-  geom_point(data = larimer_gps %>%
-               filter(City!="Cedaredge"), aes(x=Lon, y=Lat)) +
-               geom_text_repel(data = larimer_gps %>%
-                        filter(City!="Cedaredge"), 
-                        aes(x=Lon, y=Lat, 
-                        label = City), color = "black",
-                        show.legend=NA, 
-                        nudge_x = .1, nudge_y = .1) +
-  ggtitle("Poverty Per Capita Income for Larimer County") +
-  scale_fill_viridis(name = "Number of People", direction = -1, option = "cividis")
-
-#Percent of population below poverty levels
-tracts_income %>%
+#percent total pop below poverty map
+pov <- tracts_income %>%
   ggplot() +
   geom_sf(aes(fill = Percent_Poverty_AllPeople_Income_Below_Pov_Level)) +
-  geom_point(data = larimer_gps %>%
-               filter(City!="Cedaredge"), aes(x=Lon, y=Lat)) +
-               geom_text_repel(data = larimer_gps %>%
-                        filter(City!="Cedaredge"), 
-                        aes(x=Lon, y=Lat, 
-                        label = City), color = "black",
-                        show.legend=NA, 
-                        nudge_x = .1, nudge_y = .1) +
   ggtitle("Percent of Larimer County Below the Poverty Level") +
   scale_fill_viridis(name = "Percent", direction = -1, option = "cividis")
+pov
+
+```
+
+```{r arrange}
+#ggarrange() and ggpatchwork()
+#create new obj that is composite of all 4 
+
+comp_plot <- ggarrange(pop, pop_den, inc, pov_inc, pov,
+                       ncol = 23, nrow = 2, 
+                       labels = c("a", "b", "c", "d", "e"))
+
+#ggsave() then specify the width and height
 ```
 
 
