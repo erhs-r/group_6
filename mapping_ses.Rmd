@@ -174,18 +174,20 @@ plot <- p_data %>%
 
 ```{r}
 data_map <- larimer_tracts %>% 
-  left_join(.,larimer_short, by = "TRACTCE")
+  left_join(.,larimer_short, by = "TRACTCE") %>%
+  rename_all(tolower)
 
 town_latlon <- larimer_gps %>%
-  filter(City!="Cedaredge")
+  filter(City!="Cedaredge") %>%
+  rename_all(tolower)
 ```
 
 ```{r map_pop}
 #figure for Larimer County population totals
 fig_pop <- ggplot(data_map) +
-  geom_sf(aes(fill = Population_Total)) +
-  geom_point(aes(x=Lon, y=Lat), town_latlon) +
-  geom_text_repel(aes(x=Lon, y=Lat, label = City),
+  geom_sf(aes(fill = population_total)) +
+  geom_point(aes(x=lon, y=lat), town_latlon) +
+  geom_text_repel(aes(x=lon, y=lat, label = city),
                   town_latlon,
                   color = "black", show.legend=NA) +
   scale_fill_viridis(name = "City Population", direction = -1, option = "cividis") +
@@ -194,7 +196,29 @@ fig_pop <- ggplot(data_map) +
 
 fig_pop
 ```
+```{r}
+df <- data_map %>%
+  pivot_longer(cols = c("population_total", "poverty_mean_household_income",
+                        "poverty_per_capita_income",
+                        "percent_poverty_allpeople_income_below_pov_level"),
+               names_to = "var", values_to = "val")
 
+```
+
+```{r map_all, fig.width=6, fig.height=6}
+fig_all <- ggplot(df) +
+  geom_sf(aes(geometry = geometry, fill = val)) +
+  geom_point(aes(x = lon, y = lat), town_latlon) +
+  geom_text_repel(aes(x=lon, y=lat, label = city),
+                  town_latlon,
+                  color = "black", show.legend = NA) +
+  scale_fill_viridis(name = "City Population", direction = -1, option = "cividis") +
+  ggtitle("Population Totals for Cities in Larimer County")  +
+  theme_void() +
+  facet_wrap(~var, ncol = 2)
+
+fig_all
+```
 
 ```{r map_pop}
 #figure for Larimer County population totals
