@@ -171,14 +171,10 @@ plot <- p_data %>%
  ggplotly(plot)
 ```
 
-
 * maps created 1-by-1
 
 ```{r map_pop}
-#side by side plots
-#par(mfrow=c(2,2))
-
-#figure for larimer county population totals
+#figure for Larimer County population totals
 fig_pop <- larimer_tracts %>% 
   left_join(.,larimer_short, by = "TRACTCE") %>%
   ggplot() +
