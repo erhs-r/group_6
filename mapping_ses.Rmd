@@ -141,31 +141,34 @@ tracts_income <- larimer_tracts %>% left_join(.,larimer_short, by = "TRACTCE")
  
 ```{r pivotlong}
 
-#Pivot df with geodata and income vars longer, names=income vars and thier values
+#Pivot df with geodata and income vars longer, names=income vars and their values
 income_long <- pivot_longer(tracts_income,
     cols = Population_Total:Poverty_Per_Capita_Income)
 head(income_long)
 
 tracts_income_long <- income_long %>%
   select(geometry:value)
+```
 
-#create side-by-side maps of income data by community in larimer county
- # plot <- income_long %>%
- #   ggplot() +
- #   geom_sf(aes(fill = value)) +
- #   geom_point(data = larimer_gps %>%
- #               filter(City!="Cedaredge"), aes(x=Lon, y=Lat)) +
- #               geom_text_repel(data = larimer_gps %>%
- #                        filter(City!="Cedaredge"),
- #                        aes(x=Lon, y=Lat,
- #                        label = City), color = "black",
- #                        show.legend=NA,
- #                        nudge_x = .1, nudge_y = .1) +
- #      scale_fill_viridis(name = "City Population", direction = -1, 
- #      option = "cividis") +
- #   facet_wrap( ~name) + theme_void()
+```{r pivotlong_2, eval=FALSE}
+p_data <- larimer_gps %>%
+  filter(City!="Cedaredge")
 
-# ggplotly(plot)
+plot <- p_data %>%
+    ggplot(aes(x=Lon, y=Lat)) +
+    geom_sf(aes(fill = value)) +
+    geom_point(data = p_data) +
+                geom_text_repel(data = larimer_gps %>%
+                         filter(City!="Cedaredge"),
+                         aes(x=Lon, y=Lat,
+                        label = City), color = "black",
+                         show.legend=NA,
+                         nudge_x = .1, nudge_y = .1) +
+       scale_fill_viridis(name = "City Population", direction = -1, 
+       option = "cividis") +
+    facet_wrap( ~name) + theme_void()
+
+ ggplotly(plot)
 ```
 
 
