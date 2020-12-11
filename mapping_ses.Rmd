@@ -174,12 +174,13 @@ plot <- p_data %>%
 
 * maps created 1-by-1
 
-```{r maps}
+```{r map_pop}
 #side by side plots
 #par(mfrow=c(2,2))
 
 #figure for larimer county population totals
-larimer_tracts %>% left_join(.,larimer_short, by = "TRACTCE") %>%
+fig_pop <- larimer_tracts %>% 
+  left_join(.,larimer_short, by = "TRACTCE") %>%
   ggplot() +
   geom_sf(aes(fill = Population_Total)) +
   geom_point(data = larimer_gps %>%
@@ -193,8 +194,13 @@ larimer_tracts %>% left_join(.,larimer_short, by = "TRACTCE") %>%
   scale_fill_viridis(name = "City Population", direction = -1, option = "cividis") +
   ggtitle("Population Totals for Cities in Larimer County") 
 
+fig_pop
+```
+
+```{r map_income}
 #Figure for income
-larimer_tracts %>% left_join(.,larimer_short, by = "TRACTCE") %>%
+fig_income <- larimer_tracts %>%
+  left_join(.,larimer_short, by = "TRACTCE") %>%
   ggplot() +
   geom_sf(aes(fill = Poverty_Mean_Household_Income)) +
   geom_point(data = larimer_gps %>%
@@ -208,8 +214,13 @@ larimer_tracts %>% left_join(.,larimer_short, by = "TRACTCE") %>%
   ggtitle("Mean Income for Larimer County") +
   scale_fill_viridis(name = "Income (USD)", direction = -1, option = "cividis")
 
+fig_income
+```
+
+```{r map_pov}
 #Figure for pov per capita income
-larimer_tracts %>% left_join(.,larimer_short, by = "TRACTCE") %>%
+fig_pov <- larimer_tracts %>% 
+  left_join(.,larimer_short, by = "TRACTCE") %>%
   ggplot() +
   geom_sf(aes(fill = Poverty_Per_Capita_Income)) +
   geom_point(data = larimer_gps %>%
@@ -222,9 +233,11 @@ larimer_tracts %>% left_join(.,larimer_short, by = "TRACTCE") %>%
                         nudge_x = .1, nudge_y = .1) +
   ggtitle("Poverty Per Capita Income for Larimer County") +
   scale_fill_viridis(name = "Number of People", direction = -1, option = "cividis")
+```
 
+```{r map_below}
 #Percent of population below poverty levels
-larimer_tracts %>% left_join(.,larimer_short, by = "TRACTCE") %>%
+fig_below <- larimer_tracts %>% left_join(.,larimer_short, by = "TRACTCE") %>%
   ggplot() +
   geom_sf(aes(fill = Percent_Poverty_AllPeople_Income_Below_Pov_Level)) +
   geom_point(data = larimer_gps %>%
@@ -238,4 +251,5 @@ larimer_tracts %>% left_join(.,larimer_short, by = "TRACTCE") %>%
   ggtitle("Percent of Larimer County Below the Poverty Level") +
   scale_fill_viridis(name = "Percent", direction = -1, option = "cividis")
 
+fig_below
 ```
