@@ -219,11 +219,39 @@ head(income_long)
 ```
 
 
-
 ```{r smallmultiples}
+
+#create factor levels from col = name for each income var
+name_levels <-
+  factor(income_long$name, 
+         levels = c("Population_Total",
+                    "Population_Density_PerLandSquareMile",
+                    "Percent_Poverty_AllPeople_Income_Below_Pov_Level",
+                    "Poverty_Median_Household_Income",
+                    "Poverty_Mean_Household_Income",
+                    "Poverty_Per_Capita_Income"))
+#plot 
+
+tracts_income %>%
+  ggplot() +
+  geom_sf(aes(fill = Percent_Poverty_AllPeople_Income_Below_Pov_Level)) +
+  geom_point(data = larimer_gps %>%
+               filter(City!="Cedaredge"), aes(x=Lon, y=Lat)) +
+               geom_text_repel(data = larimer_gps %>%
+                        filter(City!="Cedaredge"), 
+                        aes(x=Lon, y=Lat, 
+                        label = City), color = "black",
+                        show.legend=NA, 
+                        nudge_x = .1, nudge_y = .1) +
+  ggtitle("Percent of Larimer County Below the Poverty Level") +
+  scale_fill_viridis(name = "Percent", direction = -1, option = "cividis")
+ggplot(income_long, aes(x=))
+
+class()
+
 income_long %>%
   ggplot() +
-  geom_sf(aes(fill = value)) +
+  geom_sf(aes(fill = name)) +
   geom_point(data = larimer_gps %>%
                filter(City!="Cedaredge"), aes(x=Lon, y=Lat)) +
                geom_text_repel(data = larimer_gps %>%
@@ -234,7 +262,7 @@ income_long %>%
                         nudge_x = .1, nudge_y = .1) +
       scale_fill_viridis(name = "City Population", direction = -1,
       option = "cividis") +
-       facet_wrap(~name, n_col=3) 
+       facet_wrap(~name) 
   
 
 tracts_income_long <- income_long %>%
