@@ -140,7 +140,6 @@ tracts_income <- larimer_tracts %>% left_join(.,larimer_short, by = "TRACTCE")
  *trying to create income maps side-by-side using pivot_longer and facet_wrap*
  
 ```{r pivotlong}
-
 #Pivot df with geodata and income vars longer, names=income vars and their values
 income_long <- pivot_longer(tracts_income,
     cols = Population_Total:Poverty_Per_Capita_Income)
@@ -172,6 +171,30 @@ plot <- p_data %>%
 ```
 
 * maps created 1-by-1
+
+```{r}
+data_map <- larimer_tracts %>% 
+  left_join(.,larimer_short, by = "TRACTCE")
+
+town_latlon <- larimer_gps %>%
+  filter(City!="Cedaredge")
+```
+
+```{r map_pop}
+#figure for Larimer County population totals
+fig_pop <- ggplot(data_map) +
+  geom_sf(aes(fill = Population_Total)) +
+  geom_point(aes(x=Lon, y=Lat), town_latlon) +
+  geom_text_repel(aes(x=Lon, y=Lat, label = City),
+                  town_latlon,
+                  color = "black", show.legend=NA) +
+  scale_fill_viridis(name = "City Population", direction = -1, option = "cividis") +
+  ggtitle("Population Totals for Cities in Larimer County")  +
+  theme_void()
+
+fig_pop
+```
+
 
 ```{r map_pop}
 #figure for Larimer County population totals
