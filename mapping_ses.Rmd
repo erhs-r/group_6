@@ -142,71 +142,81 @@ tracts_income <- larimer_tracts %>% left_join(.,larimer_short, by = "TRACTCE")
 ```{r avg-covid-bycity}
 
 #total covid cases by city in larimer county
-LC_covid %>%
+cases <- LC_covid_gps %>%
   group_by(City) %>%
-  count()
+  count() 
+ # rename("COVID-19 Cases" = n) 
 
 #total covid deaths by city in larimer county
-covid_deaths %>%
+deaths <- covid_deaths %>%
   group_by(City) %>%
-  count()
+  count() 
+#  rename("COVID-19 Deaths" = n) 
 ```
 
 ```{r create maps}
 
 #create base figure with city names as points
-poly <- pop <-  tracts_income %>%
+cases_fig <- tracts_income %>%
   ggplot() +
   geom_sf() +
-  geom_point(data = LC_covid_gps %>%
-               filter(City!="Cedaredge"), aes(x=Lon, y=Lat)) +
-               geom_text_repel(data = larimer_gps %>%
+  geom_point(data = cases %>%
+               filter(City!="Cedaredge"), aes(x=Lon, y=Lat, size = n)) +
+               geom_text_repel(data = cases %>%
                         filter(City!="Cedaredge"), 
-                        aes(x=Lon, y=Lat, 
+                        aes(x=Lon, y=Lat,
                         label = City), color = "black",
                         show.legend=NA, 
                         nudge_x = .1, nudge_y = .1) +
-    ggtitle("Larimer County City Boundaries") + theme_bw()
-poly
+    ggtitle("Larimer County COVID-19 Cases") + theme_void() 
+cases_fig
 
 #population map
 pop <-  tracts_income %>%
   ggplot() +
   geom_sf(aes(fill = Population_Total)) +
-   geom_point(data = mean_age_deaths %>%
-               filter(City!="Cedaredge"), aes(x=Lon, y=Lat)) +
-               geom_text_repel(data = larimer_gps %>%
-                        filter(City!="Cedaredge"), 
-                        aes(x=Lon, y=Lat, 
-                        label = City), color = "black",
-                        show.legend=NA, 
-                        nudge_x = .1, nudge_y = .1) 
+   geom_point(data = cases %>%
+               filter(City!="Cedaredge"), aes(x=Lon, y=Lat, size = n),
+                                              show.legend = FALSE) +
   scale_fill_viridis(name = "Population", direction = -1, option = "cividis") +
-  ggtitle("Population Totals for Cities in Larimer County") 
+  ggtitle("Population by City") + theme_void()
 pop
 
 #Population density
 pop_den <-  tracts_income %>%
   ggplot() +
   geom_sf(aes(fill = Population_Density_PerLandSquareMile)) +
-  scale_fill_viridis(name = "Number of People Per Square Mile", direction = -1, option = "cividis") +
-  ggtitle("Population Density") 
+  geom_point(data = cases %>%
+               filter(City!="Cedaredge"), aes(x=Lon, y=Lat, size = n),
+                                            show.legend = FALSE) +
+  scale_fill_viridis(name = "People Per Square Mile", 
+                     direction = -1, option = "cividis") +
+  ggtitle("Population Density") + 
+  theme_void()
 pop_den
 
 #income map
 inc <- tracts_income %>%
   ggplot() +
   geom_sf(aes(fill = Poverty_Mean_Household_Income)) +
-  ggtitle("Mean Income for Larimer County") +
-  scale_fill_viridis(name = "USD", direction = -1, option = "cividis")
+  geom_point(data = cases %>%
+               filter(City!="Cedaredge"), aes(x=Lon, y=Lat, size = n),
+                                          show.legend = FALSE) +
+  ggtitle("Mean Income") +
+  scale_fill_viridis(name = "USD", direction = -1, option = "cividis") +
+  theme_void()
 inc
 
 #percent total pop below poverty map
 pov <- tracts_income %>%
   ggplot() +
   geom_sf(aes(fill = Percent_Poverty_AllPeople_Income_Below_Pov_Level)) +
-  ggtitle("Percent of Larimer County Below the Poverty Level") +
-  scale_fill_viridis(name = "Percent", direction = -1, option = "cividis")
+  geom_point(data = cases %>%
+               filter(City!="Cedaredge"), aes(x=Lon, y=Lat, size = n),
+                                              show.legend = FALSE) +
+  ggtitle("Percent of Population Below the Poverty Level") +
+  scale_fill_viridis(name = "Percent", direction = -1, option = "cividis") +
+  theme_void()
 pov
 
 ```
@@ -215,11 +225,21 @@ pov
 #ggarrange() and ggpatchwork()
 #create new obj that is composite of all 4 
 
-comp_plot <- ggarrange(pop, pop_den, inc, pov_inc, pov,
-                       ncol = 23, nrow = 2, 
+comp_plot <- ggarrange(cases_fig, pop, pop_den, inc, pov,
+                       heights = c(3, 3, 3, 3),
+                       widths = c(3, 3, 3, 3),
+                       nrow = 2,  ncol = 4, 
                        labels = c("a", "b", "c", "d", "e"))
+comp_plot
 
-#ggsave() then specify the width and height
+ggsave(
+  filename = "LC_test.jpeg",
+  plot = comp_plot,
+  device = jpeg,
+  width = 12,
+  height = 12,
+  units = ("in"),
+)
 ```
 
 
