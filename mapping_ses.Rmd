@@ -221,6 +221,7 @@ pov
 
 ```
 
+
 ```{r arrange}
 #ggarrange() and ggpatchwork()
 #create new obj that is composite of all 4 
@@ -244,6 +245,7 @@ ggsave(
 
 
 *trying to create income maps side-by-side using pivot_longer and facet_wrap*
+* Likely will not use this code and can remove for the final draft
   
 ```{r pivotlong}
 
@@ -253,9 +255,7 @@ income_long <- pivot_longer(tracts_income,
 head(income_long)
 ```
 
-
-
-```{r smallmultiples}
+```{r pivotlonger}
 income_long %>%
   ggplot() +
   geom_sf(aes(fill = value)) +
@@ -277,18 +277,5 @@ tracts_income_long <- income_long %>%
 
 
 # ggplotly(plot)
-```
-
-```{r}
-larimer_gps %>%
-  ggplot() +
-   geom_point(data = larimer_gps %>%
-               filter(City!="Cedaredge"), aes(x=Lon, y=Lat)) +
-               geom_text_repel(data = larimer_gps %>%
-                        filter(City!="Cedaredge"), 
-                        aes(x=Lon, y=Lat, 
-                        label = City), color = "black",
-                        show.legend=NA, 
-                        nudge_x = .1, nudge_y = .1)
 ```
 
