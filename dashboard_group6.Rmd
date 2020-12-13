@@ -20,6 +20,7 @@ library(lubridate)
 library(viridis)
 library(leaflet)
 library(ggplot2)
+library(ggrepel)
 
 state_policy <- read_csv("raw_data/state_policy_updates_20201122_0721.csv")
 LC_covid <- read_csv("raw_data/LC-COVID-casesdata.csv")
@@ -29,13 +30,134 @@ income <- read_csv("raw_data/Income_Poverty__Census_Tracts_.csv")
 ### Pull census data for Larimer county 
 
 larimer_tracts <- tracts(state = 08, county =069, 
-                        cb = TRUE, class = "sf")
+                        cb = TRUE, class = "sf", progress_bar = FALSE)
+
+larimer_income <- income %>%
+  filter(County == "LARIMER")
+
+larimer_info <- full_join(larimer_income, larimer_tracts, 
+                          by = list(x = "FIPS", y = "GEOID"))
 ```
 
 ### Chart A
 
-```{r}
+```{r data_manipulation}
+### Make all city names in title format to join data sets
 
+LC_covid <- LC_covid %>% 
+  mutate(City = str_to_title(City))
+
+### Create vectors of gps coordinates of cities from information collected from
+### the internet
+
+Lat <- c(40.625679, 40.284667, 40.431269, 40.377117, 40.559167, 40.453740, 
+         40.336944, 40.633808, 40.794319, 40.404789, 40.487171, 40.807820, 
+         40.529718, 40.702324, 40.477222)
+
+Lon <- c(-105.171089, -104.965504, -105.339661, -105.525514, -105.078056, 
+         -105.448837, -104.912222, -105.148819, -105.216579, -105.085868, 
+         -105.210056, -105.578641, -104.981654, -105.005497, -104.911944)
+
+City <- c("Bellvue", "Berthoud", "Drake", "Estes Park",
+          "Fort Collins", "Glen Haven", "Johnstown", "Laporte", "Livermore",
+          "Loveland", "Masonville", "Red Feather Lakes", "Timnath", 
+          "Wellington", "Windsor")
+
+### Combine the vectors into a data frame and then join the data sets so cities
+### have coordinates associated with them for mapping and remove NA values
+
+larimer_gps <- data.frame(City, Lat, Lon)
+
+LC_covid_gps <- full_join(larimer_gps, LC_covid, by = "City") %>% 
+  na.rm()
+
+LC_covid_gps <- LC_covid_gps %>% 
+  mutate(ReportedDate = mdy(ReportedDate)) 
+
+LC_covid_gps <- LC_covid_gps %>%
+  mutate(popup_info = paste("<b>Location:</b>", City, "<br/>",
+                            "<b>Age:</b>", Age, "<br/>",
+                            "<b>Date:</b>", ReportedDate, "<br/>",
+                            "<b>Total # of cases:</b>", CaseCount))
+
+total_covid_per_city <- LC_covid %>% 
+  group_by(City) %>% 
+  count()
+
+total_covid <- full_join(total_covid_per_city, larimer_gps, by = "City") %>% 
+  na.rm()
+
+### Provide covid deaths with coordinates
+
+covid_deaths <- full_join(larimer_gps, covid_deaths, 
+                          by = list(x = "City", y = "city")) %>% 
+  na.rm()
+
+covid_deaths_total <- covid_deaths %>% 
+  group_by(City) %>% 
+  count()
+
+mean_age_deaths <- covid_deaths %>% 
+  group_by(City) %>% 
+  summarize(mean_age = mean(age), .groups = "drop")
+
+mean_age_deaths <- full_join(mean_age_deaths, covid_deaths_total, by = "City")
+
+mean_age_deaths <- full_join(larimer_gps, mean_age_deaths, by = "City") %>% 
+  na.rm() %>% 
+  mutate(popup_info = paste("<b>Location:</b>", City, "<br/>",
+                            "<b>Number of deaths:</b>", n, "<br/>",
+                            "<b>Mean age of death:</b>", mean_age))
+
+### Create a popup column to with plot images to merge 
+
+popup_info <- c("<img src = images/Bellvue.svg>",
+                "<img src = images/Berthoud.svg>", 
+                "<img src = images/Drake.svg>",
+                "<img src = images/EP.svg>",
+                "<img src = images/FC.svg>",
+                "<img src = images/GH.svg>",
+                "<img src = images/Johnstown.svg>",
+                "<img src = images/Laporte.svg>",
+                "<img src = images/Livermore.svg>",
+                "<img src = images/Loveland.svg>",
+                "<img src = images/Masonville.svg>",
+                "<img src = images/RFL.svg>",
+                "<img src = images/Timnath.svg>",
+                "<img src = images/Wellington.svg>",
+                "<img src = images/Windsor.svg>")
+
+plots <- data.frame(City, popup_info)
+
+total_covid <- full_join(total_covid, plots, by = "City")
+  
+### Add icon to differentiate between cases and deaths
+
+obit_icon <- makeIcon("images/icons8-obituary-30.png", 
+                      iconWidth = 15, iconHeight = 15)
+
+covid_icon <- makeIcon("images/icons8-coronavirus-64.png",
+                       iconWidth = 15, iconHeight = 15)
+
+leaflet() %>%
+  addTiles() %>%
+  addPolygons(data = larimer_tracts, color = "#000000", 
+              fillColor = "969696", weight = 2, 
+              group = "tracts") %>% 
+  addMarkers(data = total_covid,
+             lat = ~Lat, 
+             lng = ~Lon,
+             icon = ~covid_icon,
+             popup = ~popup_info,
+             group = "cases")%>% 
+  addMarkers(data = mean_age_deaths,
+             lng = ~ Lon, 
+             lat = ~ Lat,
+             popup = ~ popup_info, 
+             icon = ~obit_icon,
+             group = "deaths") %>% 
+  addLayersControl(baseGroups = c("base map"),
+                   overlayGroups = c("tracts", "cases", "deaths"))
 ```
 
 Column {data-width=350}
@@ -69,7 +191,9 @@ tracts_income <- larimer_tracts %>% left_join(.,larimer_short, by = "TRACTCE")
                         label = City), color = "black",
                         show.legend=NA, 
                         nudge_x = .1, nudge_y = .1) +
-  scale_fill_viridis(name = "City Population", direction = -1, option = "cividis") +
+  scale_fill_viridis(name = "City Population", 
+                     direction = -1, 
+                     option = "cividis") +
   ggtitle("Population Totals for Cities in Larimer County") 
 
 #Figure for income
@@ -120,127 +244,6 @@ tracts_income %>%
 
 ### Chart C
 
-```{r data_manipulation}
-### Filter the income data to just Larimer county
+```{r}
 
-larimer_income <- income %>%
-  filter(County == "LARIMER")
-
-### Join the data sets 
-
-larimer_info <- full_join(larimer_income, larimer_tracts, 
-                          by = list(x = "FIPS", y = "GEOID"))
-
-### Make all city names in title format to join data sets
-
-LC_covid <- LC_covid %>% 
-  mutate(City = str_to_title(City))
-
-### Create vectors of gps coordinates of cities from information collected from
-### the internet
-
-Lat <- c(40.625679, 40.284667, 38.894137, 40.431269, 40.377117, 40.559167, 
-         40.453740, 40.336944, 40.633808, 40.794319, 40.404789, 40.487171,
-         40.807820, 40.529718, 40.702324, 40.477222)
-
-Lon <- c( -105.171089, -104.965504, -107.925498, -105.339661, -105.525514,
-          -105.078056, -105.448837, -104.912222, -105.148819, -105.216579,
-          -105.085868, -105.210056,-105.578641, -104.981654, 
-          -105.005497, -104.911944)
-
-City <- c("Bellvue", "Berthoud", "Cedaredge", "Drake", "Estes Park",
-          "Fort Collins", "Glen Haven", "Johnstown", "Laporte", "Livermore",
-          "Loveland", "Masonville", "Red Feather Lakes", "Timnath", 
-          "Wellington", "Windsor")
-
-### Combine the vectors into a data frame and then join the data sets so cities
-### have coordinates associated with them for mapping and remove NA values
-
-larimer_gps <- data.frame(City, Lat, Lon)
-
-LC_covid_gps <- full_join(larimer_gps, LC_covid, by = "City") %>% 
-  na.rm()
-
-LC_covid_gps <- LC_covid_gps %>% 
-  mutate(ReportedDate = mdy(ReportedDate)) 
-
-LC_covid_gps <- LC_covid_gps %>% 
-  mutate(month = month(ReportedDate, label = TRUE,
-                     abbr = FALSE),
-       weekday = wday(ReportedDate, label = TRUE,
-                      abbr = FALSE)) %>% 
-  mutate(popup_info = paste("<b>Location:</b>", City, "<br/>",
-                            "<b>Age:</b>", Age, "<br/>",
-                            "<b>Date:</b>", ReportedDate, "<br/>",
-                            "<b>Total # of cases:</b>", CaseCount))
-
-total_covid_per_city <- LC_covid %>% 
-  group_by(City) %>% 
-  count()
-
-total_covid <- full_join(total_covid_per_city, larimer_gps, by = "City") %>% 
-  na.rm()
-
-### Provide covid deaths with coordinates
-
-covid_deaths <- full_join(larimer_gps, covid_deaths, 
-                          by = list(x = "City", y = "City")) %>% 
-  na.rm()
-
-mean_age_deaths <- covid_deaths %>% 
-  group_by(City) %>% 
-  summarize(mean_age = mean(age), .groups = "drop")
-
-mean_age_deaths <- full_join(larimer_gps, mean_age_deaths, by = "City") %>% 
-  na.rm() %>% 
-  mutate(popup_info = paste("<b>Location:</b>", City, "<br/>",
-                            "<b>Mean age of death:</b>", mean_age))
-
-### Create a popup column to with plot images to merge 
-
-popup_info <- c("<img src = images/Bellvue_plot.svg>", 
-           "<img src = images/Berthoud_plot.svg>",
-           "<img src = images/Cedaredge_plot.svg>",
-           "<img src = images/Drake_plot.svg>",
-           "<img src = images/EP_plot.svg>",
-           "<img src = images/FC_plot.svg>",
-           "<img src = images/GH_plot.svg>",
-           "<img src = images/Johnstown_plot.svg>",
-           "<img src = images/Laporte_plot.svg>",
-           "<img src = images/Livermore_plot.svg>",
-           "<img src = images/Loveland_plot.svg>",
-           "<img src = images/Masonville_plot.svg>",
-           "<img src = images/RFL_plot.svg>",
-           "<img src = images/Timnath_plot.svg>",
-           "<img src = images/Wellington_plot.svg>",
-           "<img src = images/Windsor_plot.svg>")
-
-plots <- data.frame(City, popup_info)
-
-total_covid <- full_join(total_covid, plots, by = "City")
-         
-### Add icon to differentiate between cases and deaths
-
-obit_icon <- makeIcon("images/icons8-obituary-30.png", 
-                      iconWidth = 20, iconHeight = 20)
-
-covid_icon <- makeIcon("images/icons8-coronavirus-64.png",
-                       iconWidth = 20, iconHeight = 20)
-
-leaflet() %>%
-  addTiles() %>%
-  addPolygons(data = larimer_tracts, color = "#000000", 
-              fillColor = "969696", weight = 2, 
-              group = "tracts") %>% 
-  addMarkers(data = total_covid, 
-             lat = ~Lat, 
-             lng = ~Lon,
-             icon = ~covid_icon,
-             popup = ~popup_info) %>% 
-  addMarkers(data = mean_age_deaths,
-             lng = ~ Lon, 
-             lat = ~ Lat,
-             popup = ~ popup_info, 
-             icon = ~obit_icon)
 ```
-
