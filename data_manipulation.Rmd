@@ -29,15 +29,6 @@ larimer_tracts <- tracts(state = 08, county =069,
 ```
 
 ```{r data_manipulation}
-### Filter the income data to just Larimer county
-
-larimer_income <- income %>%
-  filter(County == "LARIMER")
-
-### Join the data sets 
-
-larimer_info <- full_join(larimer_income, larimer_tracts, 
-                          by = list(x = "FIPS", y = "GEOID"))
 
 ### Make all city names in title format to join data sets
 
@@ -156,7 +147,5 @@ leaflet() %>%
              group = "deaths") %>% 
   addLayersControl(baseGroups = c("base map"),
                    overlayGroups = c("tracts", "cases", "deaths"))
-
-#making a change so I can push to github
 ```
 
