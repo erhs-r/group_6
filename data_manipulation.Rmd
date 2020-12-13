@@ -25,7 +25,7 @@ income <- read_csv("raw_data/Income_Poverty__Census_Tracts_.csv")
 ### Pull census data for Larimer county 
 
 larimer_tracts <- tracts(state = 08, county =069, 
-                        cb = TRUE, class = "sf")
+                        cb = TRUE, class = "sf", progress_bar = FALSE)
 ```
 
 ```{r data_manipulation}
