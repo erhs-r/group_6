@@ -130,7 +130,7 @@ popup_info <- c("<img src = images/Bellvue.svg>",
 plots <- data.frame(City, popup_info)
 
 total_covid <- full_join(total_covid, plots, by = "City")
-  
+
 ### Add icon to differentiate between cases and deaths
 
 obit_icon <- makeIcon("images/icons8-obituary-30.png", 
