@@ -97,185 +97,139 @@ total_covid <- full_join(total_covid_per_city, larimer_gps, by = "City") %>%
 ```
 
 
-```{r covid_coords}
-### Provide covid deaths with coordinates
-
-covid_deaths <- full_join(larimer_gps, covid_deaths, 
-                          by = list(x = "City", y = "city")) %>% 
-  na.rm()
-
-mean_age_deaths <- covid_deaths %>% 
-  group_by(City) %>% 
-  summarize(mean_age = mean(age), .groups = "drop")
-
-mean_age_deaths <- full_join(larimer_gps, mean_age_deaths, by = "City") %>% 
-  na.rm() %>% 
-  mutate(popup_info = paste("<b>Location:</b>", City, "<br/>",
-                            "<b>Mean age of death:</b>", mean_age))
-```
+### Covid cases by city
 
 
-```{r keyvars_income}
+```{r covid cases}
+#total covid cases by city in larimer county
 
 #Creating a new dataset with fewer variables
 larimer_short <- larimer_info %>%
   select(Population_Total:Poverty_Per_Capita_Income, TRACTCE)
 
 #Join income vars with larimer_tracts by "TRACTCE", now income vars have coords
-tracts_income <- larimer_tracts %>% left_join(.,larimer_short, by = "TRACTCE") 
-```
+#tracts_income <- larimer_tracts %>% left_join(.,larimer_short, by = "TRACTCE") 
 
+data_map <- larimer_tracts %>% 
+  left_join(.,larimer_short, by = "TRACTCE") %>%
+  rename_all(tolower)
 
-* This is where I'll need to do something to combine lat/lon in covid with 
-  geometry in tracts
-  
-```{r newdf-covid}
-#How to join LC_covid_gps with to larimer_tracts with no common col?
-# larimer_tracts <- LC_covid_gps %>%
-#   select(City:weekday, )
-```
-
-
-## Income-Poverty Maps
-
-* maps created 1-by-1 ----
-```{r avg-covid-bycity}
-
-#total covid cases by city in larimer county
+town_latlon <- larimer_gps %>%
+  filter(City!="Cedaredge") %>%
+  rename_all(tolower)
 cases <- LC_covid_gps %>%
+  filter(City!="Cedaredge") %>%
   group_by(City) %>%
-  count() 
- # rename("COVID-19 Cases" = n) 
+  count() %>%
+  rename(COVID_Cases = n) %>%
+  rename_all(tolower) %>%
+  left_join(town_latlon, cases, by="city")
+
 
 #total covid deaths by city in larimer county
 deaths <- covid_deaths %>%
-  group_by(City) %>%
+  group_by(city) %>%
   count() 
 #  rename("COVID-19 Deaths" = n) 
-```
 
-```{r create maps}
-
-#create base figure with city names as points
-cases_fig <- tracts_income %>%
-  ggplot() +
-  geom_sf() +
-  geom_point(data = cases %>%
-               filter(City!="Cedaredge"), aes(x=Lon, y=Lat, size = n)) +
-               geom_text_repel(data = cases %>%
-                        filter(City!="Cedaredge"), 
-                        aes(x=Lon, y=Lat,
-                        label = City), color = "black",
-                        show.legend=NA, 
-                        nudge_x = .1, nudge_y = .1) +
-    ggtitle("Larimer County COVID-19 Cases") + theme_void() 
-cases_fig
-
-#population map
-pop <-  tracts_income %>%
-  ggplot() +
-  geom_sf(aes(fill = Population_Total)) +
-   geom_point(data = cases %>%
-               filter(City!="Cedaredge"), aes(x=Lon, y=Lat, size = n),
-                                              show.legend = FALSE) +
-  scale_fill_viridis(name = "Population", direction = -1, option = "cividis") +
-  ggtitle("Population by City") + theme_void()
-pop
-
-#Population density
-pop_den <-  tracts_income %>%
-  ggplot() +
-  geom_sf(aes(fill = Population_Density_PerLandSquareMile)) +
-  geom_point(data = cases %>%
-               filter(City!="Cedaredge"), aes(x=Lon, y=Lat, size = n),
-                                            show.legend = FALSE) +
-  scale_fill_viridis(name = "People Per Square Mile", 
-                     direction = -1, option = "cividis") +
-  ggtitle("Population Density") + 
-  theme_void()
-pop_den
-
-#income map
-inc <- tracts_income %>%
-  ggplot() +
-  geom_sf(aes(fill = Poverty_Mean_Household_Income)) +
-  geom_point(data = cases %>%
-               filter(City!="Cedaredge"), aes(x=Lon, y=Lat, size = n),
-                                          show.legend = FALSE) +
-  ggtitle("Mean Income") +
-  scale_fill_viridis(name = "USD", direction = -1, option = "cividis") +
-  theme_void()
-inc
-
-#percent total pop below poverty map
-pov <- tracts_income %>%
-  ggplot() +
-  geom_sf(aes(fill = Percent_Poverty_AllPeople_Income_Below_Pov_Level)) +
-  geom_point(data = cases %>%
-               filter(City!="Cedaredge"), aes(x=Lon, y=Lat, size = n),
-                                              show.legend = FALSE) +
-  ggtitle("Percent of Population Below the Poverty Level") +
-  scale_fill_viridis(name = "Percent", direction = -1, option = "cividis") +
-  theme_void()
-pov
-
+#Date range for covid cases data collection
+LC_covid_gps$ReportedDate %>% range()
 ```
 
 
-```{r arrange}
+### Income and poverty maps
+
+*Note. Covid cases Jan 1, 2020 through March 3, 2020*
+
+```{r maps}
+#figure for Larimer County population totals
+fig_pop <- ggplot(data_map) +
+                  geom_sf(aes(fill = population_total)) +
+                    geom_point(aes(x=lon, y=lat, size = covid_cases),
+                               show.legend = FALSE, cases) +
+                    geom_text_repel(aes(x=lon, y=lat, label = city),
+                                    town_latlon,
+                                    color = "black", show.legend=NA) +
+                    scale_fill_viridis(name = "City Population", direction = -1, option = "cividis") +
+  ggtitle("Population Totals and Covid Cases (January to March 2020) for Larimer County")  +
+  theme_void()
+                    fig_pop
+
+#income                                 
+fig_income <- ggplot(data_map) +
+                  geom_sf(aes(fill = poverty_mean_household_income)) +
+                    geom_point(aes(x=lon, y=lat, size = covid_cases),
+                               show.legend = FALSE, cases) +
+                    geom_text_repel(aes(x=lon, y=lat, label = city),
+                                    town_latlon,
+                                    color = "black", show.legend=NA) +
+                    scale_fill_viridis(name = "USD", direction = -1, option = "cividis") +
+  ggtitle("Mean Income")  +
+  theme_void()
+fig_income
+
+#population density
+fig_density <- ggplot(data_map) +
+                  geom_sf(aes(fill = population_density_perlandsquaremile)) +
+                    geom_point(aes(x=lon, y=lat, size = covid_cases),
+                               show.legend = FALSE, cases) +
+                    geom_text_repel(aes(x=lon, y=lat, label = city),
+                                    town_latlon,
+                                    color = "black", show.legend=NA) +
+                    scale_fill_viridis(name = "People Per Square Mile", 
+                                       direction = -1, option = "cividis") +
+  ggtitle("Population Density")  +
+  theme_void()
+fig_density    
+
+#poverty
+fig_poverty <- ggplot(data_map) +
+                  geom_sf(aes(fill = percent_poverty_allpeople_income_below_pov_level)) +
+                    geom_point(aes(x=lon, y=lat, size = covid_cases),
+                               show.legend = FALSE, cases) +
+                    geom_text_repel(aes(x=lon, y=lat, label = city),
+                                    town_latlon,
+                                    color = "black", show.legend=NA) +
+                    scale_fill_viridis(name = "Percent", 
+                                       direction = -1, option = "cividis") +
+  ggtitle("Percent of Population Below the Poverty Level")  +
+  theme_void()
+fig_poverty   
+```
+
+```{r data_map}
+df <- data_map %>%
+pivot_longer(cols = c("population_total", "poverty_mean_household_income",
+           "population_density_perlandsquaremile",
+             "percent_poverty_allpeople_income_below_pov_level"),
+ names_to = "var", values_to = "val")
+```
+
+*ISSUE with combining*
+*Looks better than ggarrange(), but only 1 fig shows statistics and label*
+```{r map_all, fig.width=6, fig.height=6}
+fig_all <- ggplot(df) +
+geom_sf(aes(geometry = geometry, fill = val)) +
+geom_point(aes(x = lon, y = lat, size = covid_cases),
+            show.legend = FALSE, cases) +
+geom_text_repel(aes(x=lon, y=lat, label = city),
+                              town_latlon,
+                              color = "black", show.legend = NA) +
+scale_fill_viridis(name = "City Population", direction = -1, option = "cividis") +
+ggtitle("Larimer County City Comparrison")  +
+theme_void() +
+facet_wrap(~var, ncol = 2)
+fig_all
+```
+
+
+#FIGURE is all messed up but has all details for each figure
+```{r arrange, fig.width=6, fig.height=6}}
 #ggarrange() and ggpatchwork()
 #create new obj that is composite of all 4 
 
-comp_plot <- ggarrange(cases_fig, pop, pop_den, inc, pov,
-                       heights = c(3, 3, 3, 3),
-                       widths = c(3, 3, 3, 3),
+comp_plot <- ggarrange(fig_pop, fig_density, fig_income, fig,
                        nrow = 2,  ncol = 4, 
-                       labels = c("a", "b", "c", "d", "e"))
+                       labels = c("a", "b", "c", "d"))
 comp_plot
-
-ggsave(
-  filename = "LC_test.jpeg",
-  plot = comp_plot,
-  device = jpeg,
-  width = 12,
-  height = 12,
-  units = ("in"),
-)
 ```
-
-
-*trying to create income maps side-by-side using pivot_longer and facet_wrap*
-* Likely will not use this code and can remove for the final draft
-  
-```{r pivotlong}
-
-#Pivot df with geodata and income vars longer, names=income vars and thier values
-income_long <- pivot_longer(tracts_income,
-    cols = Population_Total:Poverty_Per_Capita_Income)
-head(income_long)
-```
-
-```{r pivotlonger}
-income_long %>%
-  ggplot() +
-  geom_sf(aes(fill = value)) +
-  geom_point(data = larimer_gps %>%
-               filter(City!="Cedaredge"), aes(x=Lon, y=Lat)) +
-               geom_text_repel(data = larimer_gps %>%
-                        filter(City!="Cedaredge"),
-                        aes(x=Lon, y=Lat,
-                        label = City), color = "black",
-                        show.legend=NA,
-                        nudge_x = .1, nudge_y = .1) +
-      scale_fill_viridis(name = "City Population", direction = -1,
-      option = "cividis") +
-       facet_wrap(~name, n_col=3) 
-  
-
-tracts_income_long <- income_long %>%
-  select(geometry:value)
-
-
-# ggplotly(plot)
-```
-
