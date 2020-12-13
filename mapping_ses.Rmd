@@ -150,10 +150,11 @@ fig_pop <- ggplot(data_map) +
                     geom_text_repel(aes(x=lon, y=lat, label = city),
                                     town_latlon,
                                     color = "black", show.legend=NA) +
-                    scale_fill_viridis(name = "City Population", direction = -1, option = "cividis") +
+                    scale_fill_viridis(name = "City Population", 
+                                       direction = -1, option = "cividis")+
   ggtitle("Population Totals and Covid Cases (January to March 2020) for Larimer County")  +
   theme_void()
-                    fig_pop
+fig_pop
 
 #income                                 
 fig_income <- ggplot(data_map) +
@@ -225,14 +226,8 @@ fig_all
 ```
 
 
-*FIGURE is all messed up but has all details for each figure*
-
-```{r arrange, fig.width=6, fig.height=6}}
-#ggarrange() and ggpatchwork()
-#create new obj that is composite of all 4 
-
-comp_plot <- ggarrange(fig_pop, fig_density, fig_income, fig,
-                       nrow = 2,  ncol = 4, 
-                       labels = c("a", "b", "c", "d"))
+```{r fig_arrange}
+comp_plot <- ggarrange(fig_pop, fig_density, fig_income, fig_poverty,
+                       nrow = 2,  ncol = 4, labels = c("a", "b", "c", "d"))
 comp_plot
 ```
