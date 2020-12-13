@@ -205,8 +205,10 @@ pivot_longer(cols = c("population_total", "poverty_mean_household_income",
  names_to = "var", values_to = "val")
 ```
 
+
 *ISSUE with combining*
 *Looks better than ggarrange(), but only 1 fig shows statistics and label*
+
 ```{r map_all, fig.width=6, fig.height=6}
 fig_all <- ggplot(df) +
 geom_sf(aes(geometry = geometry, fill = val)) +
@@ -223,7 +225,8 @@ fig_all
 ```
 
 
-#FIGURE is all messed up but has all details for each figure
+*FIGURE is all messed up but has all details for each figure*
+
 ```{r arrange, fig.width=6, fig.height=6}}
 #ggarrange() and ggpatchwork()
 #create new obj that is composite of all 4 
