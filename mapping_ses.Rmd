@@ -155,6 +155,7 @@ fig_pop <- ggplot(data_map) +
   ggtitle("Population Totals and Covid Cases (January to March 2020) for Larimer County")  +
   theme_void()
 fig_pop
+ggsave("lc_pop.pdf")
 
 #income                                 
 fig_income <- ggplot(data_map) +
@@ -168,8 +169,10 @@ fig_income <- ggplot(data_map) +
   ggtitle("Mean Income")  +
   theme_void()
 fig_income
+ggsave("fig_income.pdf")
 
 #population density
+
 fig_density <- ggplot(data_map) +
                   geom_sf(aes(fill = population_density_perlandsquaremile)) +
                     geom_point(aes(x=lon, y=lat, size = covid_cases),
@@ -182,6 +185,7 @@ fig_density <- ggplot(data_map) +
   ggtitle("Population Density")  +
   theme_void()
 fig_density    
+ggsave("fig_den.pdf")
 
 #poverty
 fig_poverty <- ggplot(data_map) +
@@ -196,7 +200,9 @@ fig_poverty <- ggplot(data_map) +
   ggtitle("Percent of Population Below the Poverty Level")  +
   theme_void()
 fig_poverty   
+ggsave("fig_povwety.pdf")
 ```
+
 
 ```{r data_map}
 df <- data_map %>%
@@ -228,6 +234,7 @@ fig_all
 
 ```{r fig_arrange}
 comp_plot <- ggarrange(fig_pop, fig_density, fig_income, fig_poverty,
-                       nrow = 2,  ncol = 4, labels = c("a", "b", "c", "d"))
+                       nrow = 2,  ncol = 4, labels = c("a", "b", "c", "d"),
+                       labels("Larimer County"))
 comp_plot
 ```
