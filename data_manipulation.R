@@ -62,18 +62,7 @@ City <- c("Bellvue", "Berthoud", "Drake", "Estes Park",
           "Loveland", "Masonville", "Red Feather Lakes", "Timnath", 
           "Wellington", "Windsor")
 
-Lat <- c(40.559167, 40.404789, 40.284667, 40.377117, 40.336944, 40.807820, 
-         40.529718, 40.702324, 40.477222, 40.633808, 40.625679, 40.431269,
-         40.453740, 40.794319, 40.487171, 38.894137)
-Lon <- c(-105.078056, -105.085868, -104.965504, -105.525514, -104.912222,
-         -105.578641, -104.981654, -105.005497, -104.911944, -105.148819,
-         -105.171089, -105.339661, -105.448837, -105.216579, -105.210056,
-         -107.925498)
 
-City <- c("Fort Collins", "Loveland", "Berthoud", "Estes Park", "Johnstown",
-          "Red Feather Lakes", "Timnath", "Wellington", "Windsor", "Laporte", 
-          "Bellvue", "Drake", "Glen Haven", "Livermore", "Masonville", 
-          "Cedaredge")
 ### Combine the vectors into a data frame and then join the data sets so cities
 ### have coordinates associated with them for mapping and remove NA values
 
