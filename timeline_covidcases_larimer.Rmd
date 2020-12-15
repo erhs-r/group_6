@@ -50,10 +50,15 @@ month_covid <- total_covid %>%
 total_covid %>%
   ggplot() + 
   geom_line(aes(x = date, y = n)) + 
-  theme_stata() + 
+  scale_x_date(date_labels = " %b", date_breaks = "1 month") +
+  theme_clean() +
+  geom_vline(xintercept= as.Date("2020-11-10"), color="red", size=.5) +
+  geom_vline(xintercept = as.Date("2020-03-25"), color = "blue", size = .5) +
+  geom_text(aes(x=as.Date("2020-11-10"), label="Election Season", y=250), colour="red", angle=90, vjust = -1, text=element_text(size=10)) + 
+    geom_text(aes(x=as.Date("2020-03-25"), label="Stay at Home Order", y=200), colour="blue", angle=90, vjust = -1, text=element_text(size=10)) + 
   ggtitle("Total COVID Cases in Larimer County from March to December") + 
-  xlab("Date of Confirmed Cases (March-December)") + 
-  ylab("Total COVID Cases")
+  xlab("Month of Confirmed Cases") + 
+  ylab("Total COVID Cases Confirmed")
 
 ```
 
