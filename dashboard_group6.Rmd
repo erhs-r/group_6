@@ -5,7 +5,10 @@ output:
   flexdashboard::flex_dashboard:
     orientation: columns
     vertical_layout: fill
+runtime: shiny
 ---
+
+Inputs {.sidebar}
 
 ``````{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
@@ -246,7 +249,7 @@ tracts_income %>%
 ```
 
 
-### Chart C
+### Total COVID Cases in Larimer County 
 
 ```{r load_dataset, echo=FALSE}
 
