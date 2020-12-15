@@ -18,5 +18,20 @@ The interactive map details the number of COVID-19 cases and deaths per city in
 Larimer County from March 2020 to November 2020. The overlay toggle allows the 
 tracts to be visualized individually or all together. 
 
-Chart B (whatever name this is called) provides the population density, income,
-and poverty levels of each city within Larimer County. 
+The following maps represent population density, income, and poverty levels 
+of each city within Larimer County. The size of each point represents the 
+number of COVID-19 cases (March-December 2020) by city. Larger dots mean that 
+that city has had more cases when compared to cities with smaller dots.
+
+While these figures don't test for statistical significance of associations, 
+they allow us to visually explore spatial patterns in the data.
+
+We can see that the number of cases were higher in cities including 
+Fort Collins and Loveland, not surprising. Income and poverty together show 
+that cities with lower mean income have higher poverty levels and vice versa. 
+
+Note. These data are pulled from the 2010 census and we discovered that they 
+are off by a magnitude of ten. For example, the 2010 population in 
+Fort Collins, CO was 120,000 people, not 12,000 people.
+
+
