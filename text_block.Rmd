@@ -1,0 +1,22 @@
+---
+title: "Text Block"
+author: "Breanna Wenck"
+date: "12/14/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+```
+
+
+Larimer County COVID-19 cases and deaths data can be found [here](https://www.larimer.org/health/communicable-disease/coronavirus-covid-19/larimer-county-positive-covid-19-numbers). 
+COVID-19 State Policies can be found [here](https://healthdata.gov/dataset/covid-19-state-and-county-policy-orders).
+Income and Poverty Census data can be found [here](https://data-cdphe.opendata.arcgis.com/datasets/). 
+
+The interactive map details the number of COVID-19 cases and deaths per city in 
+Larimer County from March 2020 to November 2020. The overlay toggle allows the 
+tracts to be visualized individually or all together. 
+
+Chart B (whatever name this is called) provides the population density, income,
+and poverty levels of each city within Larimer County. 
