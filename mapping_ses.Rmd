@@ -200,7 +200,7 @@ fig_poverty <- ggplot(data_map) +
   ggtitle("Percent of Population Below the Poverty Level")  +
   theme_void()
 fig_poverty   
-ggsave("fig_povwety.pdf")
+ggsave("fig_poverty.pdf")
 ```
 
 
@@ -229,12 +229,13 @@ ggtitle("Larimer County City Comparrison")  +
 theme_void() +
 facet_wrap(~var, ncol = 2)
 fig_all
+ggsave("fig_all.pdf")
 ```
 
 
 ```{r fig_arrange}
 comp_plot <- ggarrange(fig_pop, fig_density, fig_income, fig_poverty,
-                       nrow = 2,  ncol = 4, labels = c("a", "b", "c", "d"),
-                       labels("Larimer County"))
+                       nrow = 2,  ncol = 4, labels = c("a", "b", "c", "d"))
 comp_plot
+ggsave("fig_combine.pdf")
 ```
