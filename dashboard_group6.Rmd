@@ -244,6 +244,59 @@ tracts_income %>%
 
 ### Chart C
 
-```{r graph}
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+```
+
+```{r setup, load_data}
+
+# Load libraries needed for analysis
+library(tidyverse)
+library(magrittr)
+library(ggplot2)
+library(ggthemes)
+library(dplyr)
+library(lubridate)
+
+#Load dataset 
+lc_covid <- read.csv("raw_data/LC-COVID-casesdata.csv")
+```
+
+```{r setup, manipulate_data}
+
+# Group by reported date (combining to make total COVID cases)
+total_covid <- lc_covid %>%
+  group_by(ReportedDate) %>%
+  count()
+
+# Check the class before mutating 
+class(x = total_covid$ReportedDate)
+
+# Mutate to mdy 
+total_covid <- mutate(.data = total_covid, 
+                      date = mdy(ReportedDate))
+
+# Group by month 
+month_covid <- total_covid %>%
+  group_by(month = floor_date(date, "day")) %>%
+  summarise(n=sum(n))
+```
+
+```{r setup, graph_data}
+
+# Plot date and totals with line graph and important dates
+
+total_covid %>%
+  ggplot() + 
+  geom_line(aes(x = date, y = n)) + 
+  scale_x_date(date_labels = " %b", date_breaks = "1 month") +
+  theme_clean() +
+  geom_vline(xintercept= as.Date("2020-11-10"), color="red", size=.5) +
+  geom_vline(xintercept = as.Date("2020-03-25"), color = "blue", size = .5) +
+  geom_text(aes(x=as.Date("2020-11-10"), label="Election Season", y=250), colour="red", angle=90, vjust = -1, text=element_text(size=10)) + 
+    geom_text(aes(x=as.Date("2020-03-25"), label="Stay at Home Order", y=200), colour="blue", angle=90, vjust = -1, text=element_text(size=10)) + 
+  ggtitle("Total COVID Cases in Larimer County from March to December") + 
+  xlab("Month of Confirmed Cases") + 
+  ylab("Total COVID Cases Confirmed")
 ```
 
