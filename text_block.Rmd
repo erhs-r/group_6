@@ -26,9 +26,9 @@ that city has had more cases when compared to cities with smaller dots.
 While these figures don't test for statistical significance of associations, 
 they allow us to visually explore spatial patterns in the data.
 
-We can see that the number of cases were higher in cities including 
-Fort Collins and Loveland, not surprising. Income and poverty together show 
-that cities with lower mean income have higher poverty levels and vice versa. 
+We can see that the number of cases were higher in cities with larger 
+populations including Fort Collins and Loveland. Income and poverty together 
+show that cities with lower mean income have higher poverty levels and vice versa. 
 
 Note. These data are pulled from the 2010 census and we discovered that they 
 are off by a magnitude of ten. For example, the 2010 population in 
