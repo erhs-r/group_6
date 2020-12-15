@@ -26,8 +26,6 @@ Column {data-width=650}
 
 
 ```{r load_manipulate data}
-### load data
-
 state_policy <- read_csv("raw_data/state_policy_updates_20201122_0721.csv")
 LC_covid <- read_csv("raw_data/LC-COVID-casesdata.csv")
 covid_deaths <- read_csv("raw_data/covid_deaths.csv")
