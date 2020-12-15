@@ -7,9 +7,14 @@ output:
     vertical_layout: fill
 ---
 
-```{r setup, include=FALSE}
+``````{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+```
+
+```{r load_data}
 library(flexdashboard)
 library(tidyverse)
+library(magrittr)
 library(tigris)
 library(na.tools)
 library(lubridate)
@@ -17,7 +22,24 @@ library(viridis)
 library(leaflet)
 library(ggplot2)
 library(ggrepel)
+library(ggthemes)
+
+state_policy <- read_csv("raw_data/state_policy_updates_20201122_0721.csv")
+LC_covid <- read_csv("raw_data/LC-COVID-casesdata.csv")
+covid_deaths <- read_csv("raw_data/covid_deaths.csv")
+income <- read_csv("raw_data/Income_Poverty__Census_Tracts_.csv")
+
+### Pull census data for Larimer county 
+larimer_tracts <- tracts(state = 08, county =069, 
+                        cb = TRUE, class = "sf", progress_bar = FALSE)
+
+larimer_income <- income %>%
+  filter(County == "LARIMER")
+
+larimer_info <- full_join(larimer_income, larimer_tracts, 
+                          by = list(x = "FIPS", y = "GEOID"))
 ```
+
 
 Column {data-width=650}
 -----------------------------------------------------------------------
@@ -25,32 +47,15 @@ Column {data-width=650}
 ### Interactive map of Covid cases and deaths in Larimer County, Colorado
 
 
-```{r load_manipulate data}
-state_policy <- read_csv("raw_data/state_policy_updates_20201122_0721.csv")
-LC_covid <- read_csv("raw_data/LC-COVID-casesdata.csv")
-covid_deaths <- read_csv("raw_data/covid_deaths.csv")
-income <- read_csv("raw_data/Income_Poverty__Census_Tracts_.csv")
+```{r data_manipulation}
 
-### Filter the income data to just Larimer county
-
-larimer_tracts <- tracts(state = 08, county = 069, 
-                        cb = TRUE, class = "sf")
-                        
-larimer_income <- income %>%
-  filter(County == "LARIMER")
-
-### Join the data sets 
-
-larimer_info <- full_join(larimer_income, larimer_tracts, 
-                          by = list(x = "FIPS", y = "GEOID"))
-
-  ### Make all city names in title format to join data sets
+### Make all city names in title format to join data sets
 
 LC_covid <- LC_covid %>% 
   mutate(City = str_to_title(City))
 
-  ### Create vectors of gps coordinates of cities from information collected from
-  ### the internet
+### Create vectors of gps coordinates of cities from information collected from
+### the internet
 
 Lat <- c(40.625679, 40.284667, 40.431269, 40.377117, 40.559167, 40.453740, 
          40.336944, 40.633808, 40.794319, 40.404789, 40.487171, 40.807820, 
@@ -132,8 +137,7 @@ popup_info <- c("<img src = images/Bellvue.svg>",
 plots <- data.frame(City, popup_info)
 
 total_covid <- full_join(total_covid, plots, by = "City")
-  
-         
+
 ### Add icon to differentiate between cases and deaths
 
 obit_icon <- makeIcon("images/icons8-obituary-30.png", 
@@ -165,7 +169,7 @@ leaflet() %>%
 ```
 
 
-Column {data-width=350}
+Column {data-width=550}
 -----------------------------------------------------------------------
 
 ### Income and Poverty Maps for Larimer County, Colorado
@@ -244,21 +248,10 @@ tracts_income %>%
 
 ### Chart C
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
-```
-
-```{r setup, load_data}
-
-# Load libraries needed for analysis
-library(tidyverse)
-library(magrittr)
-library(ggplot2)
-library(ggthemes)
-library(dplyr)
-library(lubridate)
+```{r load_dataset, echo=FALSE}
 
 #Load dataset 
+
 lc_covid <- read.csv("raw_data/LC-COVID-casesdata.csv")
 ```
 
@@ -270,7 +263,7 @@ total_covid <- lc_covid %>%
   count()
 
 # Check the class before mutating 
-class(x = total_covid$ReportedDate)
+#class(x = total_covid$ReportedDate)
 
 # Mutate to mdy 
 total_covid <- mutate(.data = total_covid, 
@@ -279,10 +272,10 @@ total_covid <- mutate(.data = total_covid,
 # Group by month 
 month_covid <- total_covid %>%
   group_by(month = floor_date(date, "day")) %>%
-  summarise(n=sum(n))
+  summarise(n=sum(n), .groups = "drop")
 ```
 
-```{r setup, graph_data}
+```{r setup, graph_data, fig.width=8, fig.height=5}
 
 # Plot date and totals with line graph and important dates
 
@@ -295,7 +288,7 @@ total_covid %>%
   geom_vline(xintercept = as.Date("2020-03-25"), color = "blue", size = .5) +
   geom_text(aes(x=as.Date("2020-11-10"), label="Election Season", y=250), colour="red", angle=90, vjust = -1, text=element_text(size=10)) + 
     geom_text(aes(x=as.Date("2020-03-25"), label="Stay at Home Order", y=200), colour="blue", angle=90, vjust = -1, text=element_text(size=10)) + 
-  ggtitle("Total COVID Cases in Larimer County from March to December") + 
+  ggtitle("Larimer County COVID-19 cases from March to December") + 
   xlab("Month of Confirmed Cases") + 
   ylab("Total COVID Cases Confirmed")
 ```
