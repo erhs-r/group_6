@@ -9,6 +9,35 @@ runtime: shiny
 ---
 
 Inputs {.sidebar}
+----------------------------------------------------------------------------
+
+```{r text}
+
+# Larimer County COVID 19 cases and deaths data can be found #[here](https://www.larimer.org/health/communicable-disease/coronavirus-covid-19/larimer-county-positive-covid-19-numbers). 
+# COVID-19 State Policies can be found [here](https://healthdata.gov/dataset/covid-19-state-and-county-policy-orders).
+# Income and Poverty Census data can be found [here](https://data-cdphe.opendata.arcgis.com/datasets/). 
+# 
+# The interactive map details the number of COVID-19 cases and deaths per city in 
+# Larimer County from March 2020 to November 2020. The overlay toggle allows the 
+# tracts to be visualized individually or all together. 
+# 
+# The following maps represent population density, income, and poverty levels 
+# of each city within Larimer County. The size of each point represents the 
+# number of COVID-19 cases (March-December 2020) by city. Larger dots mean that 
+# that city has had more cases when compared to cities with smaller dots.
+# 
+# While these figures don't test for statistical significance of associations, 
+# they allow us to visually explore spatial patterns in the data.
+# 
+# We can see that the number of cases were higher in cities with larger 
+# populations including Fort Collins and Loveland. Income and poverty together 
+# show that cities with lower mean income have higher poverty levels and vice versa. 
+# 
+# Note. These data are pulled from the 2010 census and we discovered that they 
+# are off by a magnitude of ten. For example, the 2010 population in 
+# Fort Collins, CO was 120,000 people, not 12,000 people.
+```
+
 
 ``````{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
